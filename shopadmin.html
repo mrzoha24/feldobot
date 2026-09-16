@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feldo - Shop & Sponsor Admin Dashboard</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #152238; /* কালার একটু পরিবর্তন করা হয়েছে */
+            --card-border: #36225f; /* বর্ডার কালার একটু মডিফাই করা হয়েছে */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-purple: #7c3aed;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 16px;
+            display: flex; justify-content: center;
+        }
+        .container { width: 100%; max-width: 480px; box-sizing: border-box; padding-bottom: 50px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .header h3 { margin: 0; color: #fff; background: linear-gradient(135deg, #c084fc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .back-btn { background: #2a1b4e; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; text-decoration: none; }
+
+        .tab-menu { display: flex; gap: 6px; margin-bottom: 16px; flex-wrap: wrap; }
+        .tab-btn { flex: 1; background: var(--card-bg); border: 1px solid var(--card-border); color: var(--text-muted); padding: 8px 4px; border-radius: 10px; font-weight: 700; font-size: 11px; cursor: pointer; text-align: center; transition: 0.2s; }
+        .tab-btn.active { background: #7c3aed; color: #fff; border-color: #7c3aed; }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+        .card h4 { margin: 0 0 12px 0; font-size: 14px; color: #c084fc; display: flex; align-items: center; gap: 8px; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        .form-control { width: 100%; background: #0b0f19; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; box-sizing: border-box; font-size: 13px; outline: none; }
+        .form-control:focus { border-color: #7c3aed; }
+
+        .action-btn { background: #7c3aed; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .action-btn:hover { background: #6d28d9; }
+
+        .order-box { background: #0b0f19; border: 1px solid var(--card-border); padding: 14px; border-radius: 14px; margin-bottom: 12px; }
+        .order-info { font-size: 12px; margin-bottom: 10px; line-height: 1.6; }
+        
+        .btn-group { display: flex; gap: 8px; }
+        .accept-btn { background: #22c55e; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; flex: 1; }
+        .reject-btn { background: #ef4444; color: #fff; border: none; padding: 8px 12px; border-radius: 8px; cursor: pointer; font-size: 11px; font-weight: bold; flex: 1; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h3><i class="fa-solid fa-store" style="color: #22c55e;"></i> Shop Admin Panel</h3>
+            <a href="mainadmin.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Dashboard</a>
+        </div>
+
+        <div class="tab-menu">
+            <div class="tab-btn active" onclick="switchTab('dollarTab', this)">Dollar Orders</div>
+            <div class="tab-btn" onclick="switchTab('sponsorTab', this)">Sponsor</div>
+            <div class="tab-btn" onclick="switchTab('agentTab', this)">Agent Req</div>
+            <div class="tab-btn" onclick="switchTab('settingsTab', this)">Payment</div>
+            <div class="tab-btn" onclick="switchTab('gameControlTab', this)">Game Control</div>
+        </div>
+
+        <!-- ১. ডলার কার্ড অর্ডার ট্যাব -->
+        <div id="dollarTab" class="tab-content active">
+            <div class="card">
+                <h4><i class="fa-solid fa-clipboard-list"></i> Pending Dollar Card Orders</h4>
+                <div id="dollarOrdersListContainer">
+                    <small style="color: var(--text-muted);">Loading dollar card orders...</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ২. স্পন্সর রিকোয়েস্ট ম্যানেজমেন্ট ট্যাব -->
+        <div id="sponsorTab" class="tab-content">
+            <div class="card">
+                <h4><i class="fa-solid fa-rectangle-ad"></i> User Sponsor Submissions</h4>
+                <div id="sponsorRequestsContainer">
+                    <small style="color: var(--text-muted);">Loading sponsor requests...</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ৩. এজেন্ট রিকোয়েস্ট ট্যাব -->
+        <div id="agentTab" class="tab-content">
+            <div class="card">
+                <h4><i class="fa-solid fa-gear" style="color: #c084fc;"></i> Sponsor & Agent Payment Accounts</h4>
+                
+                <div class="form-group">
+                    <label>Binance UID</label>
+                    <input type="text" id="setBinance" class="form-control" placeholder="Enter Binance UID">
+                </div>
+                <div class="form-group">
+                    <label>Bitget UID</label>
+                    <input type="text" id="setBitget" class="form-control" placeholder="Enter Bitget UID">
+                </div>
+                <div class="form-group">
+                    <label>Nagad Number</label>
+                    <input type="text" id="setNagad" class="form-control" placeholder="Enter Nagad number">
+                </div>
+                <div class="form-group">
+                    <label>Bkash Number</label>
+                    <input type="text" id="setBkash" class="form-control" placeholder="Enter Bkash number">
+                </div>
+
+                <button class="action-btn" onclick="savePaymentSettings()">Save Settings</button>
+            </div>
+
+            <div class="card">
+                <h4><i class="fa-solid fa-user-check"></i> Account Verification & Agent Requests</h4>
+                <div id="agentRequestsContainer">
+                    <small style="color: var(--text-muted);">Loading agent requests...</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- ৪. সাধারণ পেমেন্ট সেটিংস ট্যাব -->
+        <div id="settingsTab" class="tab-content">
+            <div class="card">
+                <h4><i class="fa-solid fa-gear"></i> Payment Accounts Settings</h4>
+                <div class="form-group">
+                    <label>Binance UID</label>
+                    <input type="text" id="setBinance2" class="form-control" placeholder="Enter Binance UID">
+                </div>
+                <div class="form-group">
+                    <label>Bitget UID</label>
+                    <input type="text" id="setBitget2" class="form-control" placeholder="Enter Bitget UID">
+                </div>
+                <div class="form-group">
+                    <label>Nagad Number</label>
+                    <input type="text" id="setNagad2" class="form-control" placeholder="Enter Nagad number">
+                </div>
+                <div class="form-group">
+                    <label>Bkash Number</label>
+                    <input type="text" id="setBkash2" class="form-control" placeholder="Enter Bkash number">
+                </div>
+                <button class="action-btn" onclick="savePaymentSettings2()">Save Settings</button>
+            </div>
+        </div>
+
+        <!-- ৫. গেম কন্ট্রোল ট্যাব -->
+        <div id="gameControlTab" class="tab-content">
+            <div class="card">
+                <h4><i class="fa-solid fa-gamepad"></i> Game Settings & Controls</h4>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 12px;">Control item spawn rate and falling speed for the drop game.</p>
+                
+                <div class="form-group">
+                    <label>Item Spawn Interval (ms) [Smaller = More Items, e.g. 300 to 650]</label>
+                    <input type="number" id="gameSpawnRate" class="form-control" placeholder="e.g. 500">
+                </div>
+                <div class="form-group">
+                    <label>Speed Multiplier [Smaller = Slower Speed, e.g. 0.8 to 1.5]</label>
+                    <input type="number" step="0.1" id="gameSpeedMultiplier" class="form-control" placeholder="e.g. 1.0">
+                </div>
+
+                <button class="action-btn" onclick="saveGameSettings()">Save Game Controls</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {  
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",  
+            authDomain: "feldo-e6bdd.firebaseapp.com",  
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",  
+            projectId: "feldo-e6bdd",  
+            storageBucket: "feldo-e6bdd.firebasestorage.app",  
+            messagingSenderId: "880628628032",  
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",  
+            measurementId: "G-EHNFBDCDZ4"  
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        const ADMIN_USER_ID = "7757851056";
+
+        if (userId !== ADMIN_USER_ID) {
+            alert("Access Denied!");
+            window.location.href = "index.html";
+        }
+
+        function switchTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.add('active');
+        }
+
+        db.ref('sponsor_payment_settings').on('value', snap => {
+            let data = snap.val() || {};
+            document.getElementById('setBinance').value = data.binanceUid || "";
+            document.getElementById('setBitget').value = data.bitgetUid || "";
+            document.getElementById('setNagad').value = data.nagadNum || "";
+            document.getElementById('setBkash').value = data.bkashNum || "";
+
+            document.getElementById('setBinance2').value = data.binanceUid || "";
+            document.getElementById('setBitget2').value = data.bitgetUid || "";
+            document.getElementById('setNagad2').value = data.nagadNum || "";
+            document.getElementById('setBkash2').value = data.bkashNum || "";
+        });
+
+        function savePaymentSettings() {
+            let settingsData = {
+                binanceUid: document.getElementById('setBinance').value.trim(),
+                bitgetUid: document.getElementById('setBitget').value.trim(),
+                nagadNum: document.getElementById('setNagad').value.trim(),
+                bkashNum: document.getElementById('setBkash').value.trim(),
+                updatedAt: Date.now()
+            };
+            db.ref('sponsor_payment_settings').set(settingsData).then(() => {
+                tg.showAlert("✅ Payment accounts settings updated successfully!");
+            });
+        }
+
+        function savePaymentSettings2() {
+            let settingsData = {
+                binanceUid: document.getElementById('setBinance2').value.trim(),
+                bitgetUid: document.getElementById('setBitget2').value.trim(),
+                nagadNum: document.getElementById('setNagad2').value.trim(),
+                bkashNum: document.getElementById('setBkash2').value.trim(),
+                updatedAt: Date.now()
+            };
+            db.ref('sponsor_payment_settings').set(settingsData).then(() => {
+                tg.showAlert("✅ Payment accounts settings updated successfully!");
+            });
+        }
+
+        db.ref('game_settings').once('value', snap => {
+            let data = snap.val() || {};
+            document.getElementById('gameSpawnRate').value = data.spawnInterval || 500;
+            document.getElementById('gameSpeedMultiplier').value = data.speedMultiplier || 1.0;
+        });
+
+        function saveGameSettings() {
+            let spawnInterval = parseInt(document.getElementById('gameSpawnRate').value) || 500;
+            let speedMultiplier = parseFloat(document.getElementById('gameSpeedMultiplier').value) || 1.0;
+
+            let gameSettings = {
+                spawnInterval: spawnInterval,
+                speedMultiplier: speedMultiplier,
+                updatedAt: Date.now()
+            };
+
+            db.ref('game_settings').set(gameSettings).then(() => {
+                tg.showAlert("🎮 Game controls updated successfully!");
+            });
+        }
+
+        db.ref('dollar_card_orders').on('value', snap => {
+            let container = document.getElementById('dollarOrdersListContainer');
+            let html = "";
+            if (snap.exists()) {
+                let ordersArray = [];
+                snap.forEach(childSnap => {
+                    let order = childSnap.val();
+                    order.id = childSnap.key;
+                    ordersArray.push(order);
+                });
+                ordersArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                ordersArray.forEach(order => {
+                    let status = order.status || 'Pending';
+                    let statusColor = status === 'Approved' ? '#22c55e' : (status === 'Rejected' ? '#ef4444' : '#fbbf24');
+                    html += `
+                        <div class="order-box">
+                            <div class="order-info">
+                                <b>User:</b> ${order.userName || 'User'} (ID: ${order.userId})<br>
+                                <b>Card:</b> <span style="color:#34d399;">${order.cardName}</span><br>
+                                <b>Cost:</b> 🪙 ${order.price.toLocaleString()} Gold<br>
+                                <b>Status:</b> <span style="color:${statusColor};">${status}</span>
+                            </div>
+                            ${status === 'Pending' ? `
+                                <div class="btn-group">
+                                    <button class="accept-btn" onclick="processDollarOrder('${order.id}', '${order.userId}', 'Approved', 0)">Approve</button>
+                                    <button class="reject-btn" onclick="processDollarOrder('${order.id}', '${order.userId}', 'Rejected', ${order.price})">Reject & Refund</button>
+                                </div>
+                            ` : ''}
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<small style="color: var(--text-muted);">No orders found.</small>`;
+            }
+        });
+
+        function processDollarOrder(orderKey, targetUserId, status, refundAmount) {
+            let updates = {};
+            updates[`dollar_card_orders/${orderKey}/status`] = status;
+            if (status === 'Rejected' && refundAmount > 0) {
+                db.ref(`users/${targetUserId}/gold`).once('value', snap => {
+                    let currentGold = snap.val() || 0;
+                    db.ref(`users/${targetUserId}`).update({ gold: currentGold + refundAmount });
+                });
+            }
+            db.ref().update(updates).then(() => {
+                tg.showAlert(`Order ${status}!`);
+            });
+        }
+
+        db.ref('sponsor_requests').on('value', snap => {
+            let container = document.getElementById('sponsorRequestsContainer');
+            let html = "";
+            if (snap.exists()) {
+                let reqArray = [];
+                snap.forEach(childSnap => {
+                    let req = childSnap.val();
+                    req.id = childSnap.key;
+                    reqArray.push(req);
+                });
+                reqArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                reqArray.forEach(req => {
+                    let status = req.status || 'Pending';
+                    let screenshotLink = req.screenshotUrl ? `<a href="${req.screenshotUrl}" target="_blank" style="color:#22c55e;">View SS 🖼️</a>` : `No SS`;
+                    html += `
+                        <div class="order-box">
+                            <div class="order-info">
+                                <b>Shop:</b> <span style="color:#34d399;">${req.shopName}</span><br>
+                                <b>TXID:</b> ${req.paymentTxId}<br>
+                                <b>SS:</b> ${screenshotLink}<br>
+                                <b>Status:</b> ${status}
+                            </div>
+                            <div class="btn-group">
+                                <button class="accept-btn" onclick="setLiveSponsor('${req.id}', '${req.shopName}', '${req.bannerUrl}', '${req.targetUrl}')">Make Live</button>
+                                <button class="reject-btn" onclick="rejectSponsor('${req.id}')">Reject</button>
+                            </div>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            } else {
+                container.innerHTML = `<small style="color: var(--text-muted);">No requests.</small>`;
+            }
+        });
+
+        function setLiveSponsor(reqKey, shopName, bannerUrl, targetUrl) {
+            let activeData = { shopName, bannerUrl, targetUrl, updatedAt: Date.now() };
+            let updates = {};
+            updates[`active_sponsor`] = activeData;
+            updates[`sponsor_requests/${reqKey}/status`] = "Active";
+            db.ref().update(updates).then(() => { tg.showAlert("Sponsor Live!"); });
+        }
+
+        function rejectSponsor(reqKey) {
+            db.ref(`sponsor_requests/${reqKey}`).update({ status: "Rejected" }).then(() => { tg.showAlert("Rejected."); });
+        }
+
+        db.ref('verification_requests').on('value', snap => {
+            let container = document.getElementById('agentRequestsContainer');
+            let html = "";
+            if (snap.exists()) {
+                let reqArray = [];
+                snap.forEach(childSnap => {
+                    let req = childSnap.val();
+                    req.id = childSnap.key;
+                    reqArray.push(req);
+                });
+                reqArray.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+                reqArray.forEach(req => {
+                    let status = req.status || 'Pending';
+                    let statusColor = status === 'Approved' ? '#22c55e' : (status === 'Rejected' ? '#ef4444' : '#fbbf24');
+                    let ssLink = req.screenshot ? `<a href="${req.screenshot}" target="_blank" style="color:#22c55e;">View SS 🖼️</a>` : `No SS (Gold Paid)`;
+                    
+                    if (status === 'Pending') {
+                        html += `
+                            <div class="order-box">
+                                <div class="order-info">
+                                    <b>User:</b> ${req.userName} (ID: ${req.userId})<br>
+                                    <b>Method:</b> <span style="color:#34d399;">${req.method}</span><br>
+                                    <b>TrxID / Info:</b> ${req.trxId}<br>
+                                    <b>SS:</b> ${ssLink}<br>
+                                    <b>Status:</b> <span style="color:${statusColor};">${status}</span>
+                                </div>
+                                <div class="btn-group">
+                                    <button class="accept-btn" onclick="processAgentRequest('${req.id}', '${req.userId}', 'Approved')">Approve & Verify</button>
+                                    <button class="reject-btn" onclick="processAgentRequest('${req.id}', '${req.userId}', 'Rejected')">Reject</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                container.innerHTML = html !== "" ? html : `<small style="color: var(--text-muted);">No pending agent requests.</small>`;
+            } else {
+                container.innerHTML = `<small style="color: var(--text-muted);">No agent requests found.</small>`;
+            }
+        });
+
+        function processAgentRequest(reqKey, targetUserId, status) {
+            let updates = {};
+            updates[`verification_requests/${reqKey}/status`] = status;
+            if (status === 'Approved') {
+                updates[`users/${targetUserId}/isVerified`] = true;
+                db.ref(`users/${targetUserId}/notifications`).push({
+                    title: "Account Verified! 🎉",
+                    message: `Congratulations! Your account verification request has been approved by Admin.`,
+                    timestamp: Date.now()
+                });
+            } else {
+                db.ref(`users/${targetUserId}/notifications`).post ? null : db.ref(`users/${targetUserId}/notifications`).push({
+                    title: "Verification Rejected",
+                    message: `Your account verification request was rejected. Please contact support.`,
+                    timestamp: Date.now()
+                });
+            }
+            db.ref().update(updates).then(() => {
+                tg.showAlert(`Agent request ${status}!`);
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8"> 
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feldo - Tasks</title>
+    <!-- Telegram Web App Script -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #152238; /* কালার একটু পরিবর্তন করা হয়েছে */
+            --card-border: #36225f; /* বর্ডার কালার একটু মডিফাই করা হয়েছে */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            padding-bottom: 110px;
+            box-sizing: border-box;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .page-slide-left { transform: translateX(-50px); opacity: 0; }
+        .page-slide-right { transform: translateX(50px); opacity: 0; }
+
+        .tasks-header-banner {
+            background: var(--primary-gradient);
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+        }
+        .tasks-header-banner h2 { margin: 0 0 6px 0; font-size: 20px; color: #fff; }
+        .tasks-header-banner p { margin: 0; font-size: 12px; opacity: 0.9; }
+
+        .section-title { font-size: 15px; font-weight: 700; color: #c084fc; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+
+        .task-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .task-grid-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 14px;
+            border-radius: 16px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        .task-grid-top { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .task-grid-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; background: #3b82f6; }
+        .task-grid-info h4 { margin: 0; font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90px; color: #fff; }
+        .task-grid-info p { margin: 2px 0 0 0; font-size: 10px; color: var(--text-muted); }
+        .task-grid-bottom { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--card-border); padding-top: 10px; }
+        .task-grid-reward { font-size: 11px; font-weight: 700; color: #fbbf24; display: flex; align-items: center; gap: 4px; }
+        
+        .task-start-btn { background: #7c3aed; color: #fff; border: none; padding: 6px 14px; border-radius: 8px; font-size: 11px; font-weight: 600; cursor: pointer; transition: 0.3s; }
+        .task-start-btn:disabled { background: #475569; cursor: not-allowed; }
+        
+        .done-badge {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            padding: 4px 10px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
+        }
+
+        .timer-display {
+            font-size: 10px;
+            font-weight: 700;
+            color: #f43f5e;
+            display: flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .bottom-nav { 
+            position: fixed; 
+            bottom: 0; 
+            left: 50%; 
+            transform: translateX(-50%); 
+            width: 100%; 
+            max-width: 480px; 
+            background: var(--card-bg); 
+            border-top: 1px solid var(--card-border); 
+            display: flex; 
+            justify-content: space-around; 
+            padding: 10px 0 12px 0; 
+            box-sizing: border-box; 
+            z-index: 9999; 
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .nav-item { text-align: center; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; transition: color 0.2s, transform 0.2s; }
+        .nav-item.active { color: #c084fc; transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+
+        .loading-text { text-align: center; color: var(--text-muted); font-size: 14px; margin-top: 20px; grid-column: span 2; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <div class="tasks-header-banner">
+            <h2>🎁 Earn GP Fuel</h2>
+            <p>Join channels to collect GP for gaming</p>
+        </div>
+
+        <div class="section-title"><i class="fa-brands fa-telegram"></i> Telegram Channel Tasks</div>
+        
+        <div class="task-grid" id="dynamicTaskGrid">
+            <div class="loading-text">Loading channels...</div>
+        </div>
+    </div>
+
+    <div class="bottom-nav" id="bottomNav">
+        <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Home</a>
+        <a class="nav-item" href="game.html"><i class="fa-solid fa-gamepad"></i>Game</a>
+        <a class="nav-item active" href="task.html"><i class="fa-solid fa-list-check"></i>Task</a>
+        <a class="nav-item" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {  
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",  
+            authDomain: "feldo-e6bdd.firebaseapp.com",  
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",  
+            projectId: "feldo-e6bdd",  
+            storageBucket: "feldo-e6bdd.firebasestorage.app",  
+            messagingSenderId: "880628628032",  
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",  
+            measurementId: "G-EHNFBDCDZ4"  
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        let userRef = db.ref('users/' + userId);
+
+        const channelList = [
+            "Xoypo", "Xoyfo", "Xoyco", "Xoyvo", "Xoyqo", "Xoywo", "Ogeeu", "Foyko", "Royci", "Royqo", "Keoiv", "Keoiz", "Bivbo", "Mivbo", "Oviib", "Qeoil", "EoPay", "cyriv", "cypit", "Bypir", "cypij", "Cypia", "Psirt", "Wjstv", "Doyvi", "Foyvi", "Jtrtv", "Apsox", "Apgox", "Oamgo", "Cisot", "Orous", "Okous", "Oeous", "uoike", "Foike", "Doike", "Uniwo", "hizdo", "Eopse", "Risof", "Roiho", "Tebvi", "Coaic", "icoji", "Uaffi", "Xafbi", "Coijo", "Cexmo", "Pexmo", "Wopse", "tavfo", "Kavfo", "Oanlo", "Eamvo", "Oanvo", "oofti", "Foqro", "Foqxo", "Joivo", "Xijci", "Foyzo", "Foljo", "Fuuqo", "fusqo", "fuyqo", "tiqoo", "Qifoo", "Hoyqo", "Qelfo", "Qeljo", "Fnntv", "Jnntv", "Fnitv", "Fbntv", "Cbigo", "Eavno", "Eapno", "Foyqo", "Upbif", "Upbib", "Upbir", "Upbip", "Upbim", "Oesno", "Lanvo", "Yovki", "Oovki", "Uovki", "syfox", "Spyzo", "Vavfo", "Cavfo", "Eavdo", "Coixo", "Fovgi", "Tafvi", "Guzna", "Aovji", "Oelgo", "Yelfo", "Zoosy", "Zivfo", "Uesgo", "Ripfo", "Fovmi", "Wovti", "Jafki", "Dikto", "Joizo", "Uxdao", "Wxdao", "Movti", "Fovti", "Oafki", "Eafki", "Oafmi", "Uafmi", "Vafmi", "Eafmi", "Gigxe", "Eooti", "Eovmi", "Pafbi", "Livbo", "Dapbo", "Roiwo", "Foiqo", "Wigdo", "Diczo", "Oafvi", "Dijzo", "Kovmi", "Oubuy", "Jafvi", "Kafvi", "Cafvi", "Eapti", "Xafti", "Cekio", "Ualjo", "Ealjo", "Uofti", "Eofti", "Pofti", "Vunki", "dagpi", "Hagpi", "Eagpi", "Cagpi", "Zidme", "Relbo", "Eelvo", "Yelvo", "Ohous", "Opous", "Tewvi", "Epegi", "Uafti", "dysel", "dycel", "Oviwo", "Dojvi", "Fisdo", "Rirbo", "Uanbo", "Oamco", "Zisvo", "Oisvo", "Wisvo", "Oispo", "reljo", "uepax", "uevax", "aekax", "Cigzo", "Uevio", "Xikvi", "Oeyvi", "Ueyvi", "Qittoo", "ZilMal", "ZilXal", "XilXal", "BikNak", "BikVak", "BakVak", "XilMal", "Zilfal", "ZilSal", "XalXil", "XikMik", "XilMil", "XikXaq", "HakVak", "HakBak", "HikDik"
+        ];
+
+        let userData = {};
+        const INTERVAL_12H = 12 * 60 * 60 * 1000;
+
+        userRef.on('value', (snapshot) => {
+            userData = snapshot.val() || {};
+            renderChannelTasks();
+        });
+
+        function renderChannelTasks() {
+            const grid = document.getElementById('dynamicTaskGrid');
+            if(!grid) return;
+            grid.innerHTML = ''; 
+
+            let currentTime = Date.now();
+            let completedChannels = userData.completedChannels || {}; 
+
+            let visibleCount = 0;
+
+            for(let i = 0; i < channelList.length; i++) {
+                let channelName = channelList[i];
+                let completionData = completedChannels[channelName];
+
+                let isCompleted = false;
+                let finishTime = 0;
+                let timeLeftStr = "";
+
+                if (completionData) {
+                    finishTime = completionData.timestamp || 0;
+                    let elapsed = currentTime - finishTime;
+                    if (elapsed < INTERVAL_12H) {
+                        isCompleted = true; 
+                        let remaining = INTERVAL_12H - elapsed;
+                        let h = Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                        let m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                        let s = Math.floor((remaining % (1000 * 60)) / 1000);
+                        timeLeftStr = `${h}h ${m}m ${s}s`;
+                    }
+                }
+
+                if (visibleCount < 8) {
+                    visibleCount++;
+
+                    let leftSideHtml = `<div class="task-grid-reward"><i class="fa-solid fa-coins"></i> +5 GP</div>`;
+                    let rightSideHtml = `<button id="btn-${channelName}" class="task-start-btn" onclick="startTask('${channelName}')">Join</button>`;
+                    let statusStyle = "";
+
+                    if (isCompleted) {
+                        leftSideHtml = `<div class="timer-display"><i class="fa-solid fa-clock"></i> ${timeLeftStr}</div>`;
+                        rightSideHtml = `<div class="done-badge"><i class="fa-solid fa-check"></i> Done</div>`;
+                        statusStyle = "opacity: 0.85;";
+                    }
+
+                    grid.innerHTML += `
+                    <div class="task-grid-card" id="card-${channelName}" style="${statusStyle}">
+                        <div class="task-grid-top">
+                            <div class="task-grid-icon"><i class="fa-brands fa-telegram"></i></div>
+                            <div class="task-grid-info">
+                                <h4>@${channelName}</h4>
+                                <p>${isCompleted ? 'Cooldown active' : 'Join & earn'}</p>
+                            </div>
+                        </div>
+                        <div class="task-grid-bottom">
+                            ${leftSideHtml}
+                            ${rightSideHtml}
+                        </div>
+                    </div>`;
+                }
+            }
+
+            if (visibleCount === 0) {
+                grid.innerHTML = `<div class="loading-text">No tasks available right now.</div>`;
+            }
+        }
+
+        function startTask(channelUsername) {
+            const btn = document.getElementById('btn-' + channelUsername);
+            if(btn.disabled) return;
+
+            tg.openTelegramLink('https://t.me/' + channelUsername);
+
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Wait 10s';
+            btn.disabled = true;
+
+            setTimeout(() => {
+                completeTaskAndReward(channelUsername);
+            }, 10000);
+        }
+
+        function completeTaskAndReward(channelUsername) {
+            let currentGp = userData.gp !== undefined ? userData.gp : (userData.points || 0);
+            let newGp = currentGp + 5;
+
+            let completedChannels = userData.completedChannels || {};
+            completedChannels[channelUsername] = { timestamp: Date.now() };
+
+            userRef.update({ 
+                gp: newGp,
+                points: newGp,
+                completedChannels: completedChannels
+            }).then(() => {
+                tg.showAlert(`Task completed! +5 GP added.`);
+                renderChannelTasks(); 
+            });
+        }
+
+        setInterval(() => {
+            renderChannelTasks();
+        }, 1000);
+
+        let touchStartX = 0;
+        window.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+        window.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let diff = touchEndX - touchStartX;
+            const container = document.getElementById('mainContainer');
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    container.classList.add('page-slide-right');
+                    setTimeout(() => { window.location.href = "game.html"; }, 250);
+                } else {
+                    container.classList.add('page-slide-left');
+                    setTimeout(() => { window.location.href = "profile.html"; }, 250);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

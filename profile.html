@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">  
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Feldo - Profile</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131c2e;
+            --card-border: #2a1b4e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-purple: #7c3aed;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 0; min-height: 100vh;
+            display: flex; justify-content: center; box-sizing: border-box;
+            overflow-x: hidden; overscroll-behavior-y: none;
+            position: relative;
+        }
+
+        .container { 
+            width: 100%; max-width: 480px; padding: 16px; margin: 0 auto;
+            padding-bottom: 110px; box-sizing: border-box; 
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .page-slide-left { transform: translateX(-50px); opacity: 0; }
+        .page-slide-right { transform: translateX(50px); opacity: 0; }
+
+        .top-header h1 { margin: 0 0 10px 0; font-size: 24px; color: #fff; background: linear-gradient(135deg, #c084fc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        
+        .profile-card {
+            background: linear-gradient(135deg, #131c2e 0%, #2a1b4e 100%);
+            border: 1px solid var(--card-border); border-radius: 20px;
+            padding: 16px; display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;
+            transition: 0.3s;
+        }
+
+        .profile-card.verified-card {
+            background: linear-gradient(135deg, #131c2e 0%, #064e3b 100%) !important;
+            border-color: #22c55e !important;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.25);
+        }
+
+        .profile-left { display: flex; align-items: center; gap: 14px; width: 100%; }
+        
+        .avatar-container { width: 65px; height: 65px; border-radius: 50%; padding: 2px; background: linear-gradient(135deg, #7c3aed, #ec4899); flex-shrink: 0; position: relative; transition: 0.3s; }
+        
+        .avatar-container.verified-avatar {
+            background: linear-gradient(135deg, #22c55e, #3b82f6) !important;
+            box-shadow: 0 0 15px rgba(34, 197, 94, 0.6);
+        }
+
+        .avatar-container img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        
+        .profile-info h3 { margin: 0 0 2px 0; font-size: 16px; color: #fff; display: flex; align-items: center; flex-wrap: wrap; }
+        .username-text { font-size: 11px; color: var(--text-muted); margin-bottom: 4px; }
+        .user-id-badge { font-size: 11px; color: #c084fc; font-weight: 650; background: rgba(124, 58, 237, 0.15); padding: 1px 6px; border-radius: 6px; }
+
+        .verified-badge {
+            background: rgba(34, 197, 94, 0.2);
+            color: #22c55e;
+            border: 1px solid rgba(34, 197, 94, 0.4);
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 6px;
+            margin-left: 6px;
+            font-weight: bold;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 16px; }
+        .stat-card { background: var(--card-bg); border: 1px solid #3a2b5e; border-radius: 16px; padding: 14px; text-align: center; }
+        .stat-card .stat-value { font-size: 18px; font-weight: 800; margin-bottom: 4px; color: #fbbf24; }
+        .stat-card .stat-label { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+        .menu-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+        .menu-row-item { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 16px; padding: 14px 16px; display: flex; align-items: center; justify-content: space-between; text-decoration: none; color: var(--text-main); transition: 0.2s; }
+        .menu-row-item:active { transform: scale(0.98); }
+        .menu-row-left { display: flex; align-items: center; gap: 14px; }
+        .menu-row-icon { width: 38px; height: 38px; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 16px; }
+
+        /* অর্ডার হিস্টোরি সেকশন ডিজাইন */
+        .section-title { font-size: 14px; font-weight: 700; color: #c084fc; margin: 20px 0 10px 4px; display: flex; align-items: center; gap: 8px; }
+        .orders-container { display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto; }
+        .order-card-item { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 12px; padding: 12px; display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+        .order-info h5 { margin: 0 0 2px 0; font-size: 13px; color: #fff; }
+        .order-info p { margin: 0; font-size: 10px; color: var(--text-muted); }
+        .order-status { font-weight: bold; padding: 4px 8px; border-radius: 6px; font-size: 10px; }
+        .status-pending { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .status-approved { background: rgba(34, 197, 94, 0.15); color: #22c55e; border: 1px solid rgba(34, 197, 94, 0.3); }
+
+        .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; display: none; margin-top: 10px; }
+        .admin-box-item { background: linear-gradient(135deg, rgba(6, 78, 59, 0.4), rgba(2, 44, 34, 0.6)); border: 1px solid #22c55e; border-radius: 14px; padding: 12px; text-align: center; text-decoration: none; color: #34d399; }
+        .admin-box-item i { font-size: 18px; margin-bottom: 4px; display: block; }
+        .admin-box-item h5 { margin: 0; font-size: 11px; font-weight: 700; color: #fff; }
+
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 480px; background: var(--card-bg); 
+            border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; 
+            padding: 12px 0 16px 0; box-sizing: border-box; z-index: 9999; 
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .nav-item { text-align: center; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; transition: color 0.2s, transform 0.2s; }
+        .nav-item.active { color: #c084fc; transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <div class="top-header">
+            <div><h1>Feldo Profile</h1></div>
+        </div>
+
+        <div class="profile-card" id="profileCardElement">
+            <div class="profile-left">
+                <div class="avatar-container" id="avatarContainerBox">
+                    <img id="user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150" alt="Avatar">
+                </div>
+                <div class="profile-info">
+                    <h3 id="profile-name">
+                        <span id="name-text">User</span>
+                        <span id="verifiedBadgeContainer"></span>
+                    </h3>
+                    <div class="username-text" id="profile-username">@user</div>
+                    <div><span class="user-id-badge" id="profile-id">ID: Loading... 📋</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">⚡ <span id="total-gp">0</span> GP</div>
+                <div class="stat-label">Fuel Balance (GP)</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">🪙 <span id="total-gold">0</span> Gold</div>
+                <div class="stat-label">Shopping Coins (Gold)</div>
+            </div>
+        </div>
+
+        <!-- ক্লিন ও প্রিমিয়াম মেনু অপশন -->
+        <div class="menu-list">
+            <!-- ভেরিফাই অপশন (এজেন্ট পেজে রিডাইরেক্ট করবে) -->
+            <a class="menu-row-item" href="agent.html">
+                <div class="menu-row-left">
+                    <div class="menu-row-icon" style="background: linear-gradient(135deg, #3b82f6, #1d4ed8);"><i class="fa-solid fa-shield-check"></i></div>
+                    <div class="menu-row-info">
+                        <h5 style="margin:0; font-size:13px; color:#fff;">Account Verification</h5>
+                        <p style="margin:0; font-size:11px; color:#38bdf8;">Want to earn more? Verify your account now!</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:var(--text-muted);"></i>
+            </a>
+
+            <a class="menu-row-item" href="wallet.html">
+                <div class="menu-row-left">
+                    <div class="menu-row-icon" style="background: linear-gradient(135deg, #22c55e, #15803d);"><i class="fa-solid fa-wallet"></i></div>
+                    <div class="menu-row-info">
+                        <h5 style="margin:0; font-size:13px; color:#fff;">Wallet & Add Fund</h5>
+                        <p style="margin:0; font-size:11px; color:var(--text-muted);">Manage UID, USDT & MFS numbers</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:var(--text-muted);"></i>
+            </a>
+
+            <!-- রেফারেল অপশন -->
+            <a class="menu-row-item" href="referral.html">
+                <div class="menu-row-left">
+                    <div class="menu-row-icon" style="background: linear-gradient(135deg, #f59e0b, #d97706);"><i class="fa-solid fa-users"></i></div>
+                    <div class="menu-row-info">
+                        <h5 style="margin:0; font-size:13px; color:#fff;">Referral Program</h5>
+                        <p style="margin:0; font-size:11px; color:var(--text-muted);">Invite friends & earn rewards</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:var(--text-muted);"></i>
+            </a>
+
+            <a class="menu-row-item" href="support.html">
+                <div class="menu-row-left">
+                    <div class="menu-row-icon" style="background: linear-gradient(135deg, #0891b2, #0e7490);"><i class="fa-solid fa-headset"></i></div>
+                    <div class="menu-row-info">
+                        <h5 style="margin:0; font-size:13px; color:#fff;">Help & Support</h5>
+                        <p style="margin:0; font-size:11px; color:var(--text-muted);">Get help and contact admin</p>
+                    </div>
+                </div>
+                <i class="fa-solid fa-chevron-right" style="color:var(--text-muted);"></i>
+            </a>
+
+            <div class="admin-grid" id="adminGridContainer">
+                <a class="admin-box-item" href="mainadmin.html">
+                    <i class="fa-solid fa-user-shield"></i>
+                    <h5>Main Admin</h5>
+                </a>
+                <a class="admin-box-item" href="shopadmin.html">
+                    <i class="fa-solid fa-store"></i>
+                    <h5>Shop Admin</h5>
+                </a>
+            </div>
+        </div>
+
+        <!-- ডলার কার্ড অর্ডার হিস্টোরি সেকশন -->
+        <div class="section-title"><i class="fa-solid fa-clock-rotate-left"></i> Recent Dollar Card Orders</div>
+        <div class="orders-container" id="ordersHistoryList">
+            <p style="text-align: center; font-size: 11px; color: var(--text-muted); padding: 10px;">Loading orders...</p>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Home</a>
+        <a class="nav-item" href="game.html"><i class="fa-solid fa-gamepad"></i>Game</a>
+        <a class="nav-item" href="task.html"><i class="fa-solid fa-list-check"></i>Task</a>
+        <a class="nav-item active" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/12.19.0/firebase-analytics-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",
+            authDomain: "feldo-e6bdd.firebaseapp.com",
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",
+            projectId: "feldo-e6bdd",
+            storageBucket: "feldo-e6bdd.firebasestorage.app",
+            messagingSenderId: "880628628032",
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",
+            measurementId: "G-EHNFBDCDZ4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        firebase.analytics();
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056"; 
+        const ADMIN_USER_ID = "7757851056";
+
+        document.getElementById('name-text').innerText = user ? (user.first_name || "User") : "User";
+        document.getElementById('profile-username').innerText = user && user.username ? `@${user.username}` : `@user`;
+        document.getElementById('profile-id').innerText = `ID: ${userId} 📋`;
+
+        if (user && user.photo_url) {
+            document.getElementById('user-avatar').src = user.photo_url;
+        }
+
+        if (userId === ADMIN_USER_ID) {
+            document.getElementById('adminGridContainer').style.display = "grid";
+        }
+
+        db.ref('users/' + userId).on('value', snap => {
+            let data = snap.val();
+            if(data) {
+                document.getElementById('total-gp').innerText = (data.gp !== undefined ? data.gp : (data.points || 0)).toLocaleString();
+                document.getElementById('total-gold').innerText = (data.gold !== undefined ? data.gold : 0).toLocaleString();
+
+                if (data.isVerified) {
+                    let avatarBox = document.getElementById('avatarContainerBox');
+                    if (avatarBox) avatarBox.classList.add('verified-avatar');
+                    let profileCard = document.getElementById('profileCardElement');
+                    if (profileCard) profileCard.classList.add('verified-card');
+                    let badgeContainer = document.getElementById('verifiedBadgeContainer');
+                    if (badgeContainer) badgeContainer.innerHTML = `<span class="verified-badge"><i class="fa-solid fa-circle-check"></i> Verified</span>`;
+                }
+            }
+        });
+
+        // ইউজারের অর্ডার হিস্টোরি ফায়ারবেস থেকে ফেচ করা
+        db.ref('dollar_card_orders').orderByChild('userId').equalTo(userId).on('value', snap => {
+            let container = document.getElementById('ordersHistoryList');
+            container.innerHTML = '';
+            
+            if (!snap.exists()) {
+                container.innerHTML = `<p style="text-align: center; font-size: 11px; color: var(--text-muted); padding: 10px;">No card orders found yet!</p>`;
+                return;
+            }
+
+            let orders = [];
+            snap.forEach(childSnap => {
+                let order = childSnap.val();
+                order.id = childSnap.key;
+                orders.push(order);
+            });
+
+            orders.sort((a, b) => b.timestamp - a.timestamp);
+
+            orders.forEach(order => {
+                let dateStr = new Date(order.timestamp).toLocaleDateString() + ' ' + new Date(order.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                let statusClass = order.status === 'Approved' ? 'status-approved' : 'status-pending';
+
+                container.innerHTML += `
+                    <div class="order-card-item">
+                        <div class="order-info">
+                            <h5>${order.cardName} (${order.price.toLocaleString()} Gold)</h5>
+                            <p>${dateStr} | Target: ${order.exchangeUid}</p>
+                        </div>
+                        <div>
+                            <span class="order-status ${statusClass}">${order.status}</span>
+                        </div>
+                    </div>
+                `;
+            });
+        });
+
+        // সোয়াইপ নেভিগেশন ফিক্সড
+        let touchStartX = 0;
+        window.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+        window.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let diff = touchEndX - touchStartX;
+            const container = document.getElementById('mainContainer');
+
+            if (Math.abs(diff) > 50) {
+                if (diff > 0) {
+                    container.classList.add('page-slide-right');
+                    setTimeout(() => { window.location.href = "game.html"; }, 250);
+                } else {
+                    container.classList.add('page-slide-left');
+                    setTimeout(() => { window.location.href = "task.html"; }, 250);
+                }
+            }
+        });
+    </script>
+</body>
+</html>

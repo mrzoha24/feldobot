@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feldo - Wallet & Add Fund</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #152238; /* কালার একটু পরিবর্তন করা হয়েছে */
+            --card-border: #36225f; /* বর্ডার কালার একটু মডিফাই করা হয়েছে */
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-purple: #7c3aed;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 16px;
+            display: flex; justify-content: center;
+            overflow-x: hidden;
+            position: relative;
+        }
+        .container { 
+            width: 100%; max-width: 480px; box-sizing: border-box; padding-bottom: 130px; 
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+        .page-slide-left { transform: translateX(-50px); opacity: 0; }
+        .page-slide-right { transform: translateX(50px); opacity: 0; }
+
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .header h3 { margin: 0; color: #fff; background: linear-gradient(135deg, #c084fc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .back-btn { background: #2a1b4e; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+        .card h4 { margin: 0 0 8px 0; font-size: 14px; color: #fbbf24; display: flex; align-items: center; gap: 8px; }
+        .section-title-desc { font-size: 11px; color: var(--text-muted); margin-bottom: 12px; }
+
+        .current-account-box {
+            background: rgba(124, 58, 237, 0.15);
+            border: 1px dashed rgba(124, 58, 237, 0.4);
+            padding: 8px 12px; border-radius: 10px; font-size: 11px; color: #c084fc;
+            margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center;
+        }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        .form-control { width: 100%; background: #0b0f19; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; box-sizing: border-box; font-size: 13px; outline: none; }
+        .form-control:focus { border-color: #7c3aed; }
+
+        .action-btn { background: linear-gradient(135deg, #7c3aed, #db2777); color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .action-btn:active { transform: scale(0.98); }
+
+        .bottom-action-bar {
+            text-align: center; margin-top: 10px; margin-bottom: 15px;
+        }
+        .bottom-back-icon-btn {
+            background: #152238; border: 1px solid var(--card-border); color: #c084fc;
+            padding: 10px 20px; border-radius: 50px; font-size: 12px; font-weight: 600;
+            cursor: pointer; text-decoration: none; display: inline-flex; align-items: center; gap: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3); transition: 0.2s;
+        }
+        .bottom-back-icon-btn:active { transform: scale(0.95); }
+
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 480px; background: var(--card-bg); 
+            border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; 
+            padding: 12px 0 16px 0; box-sizing: border-box; z-index: 9999; 
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.4);
+        }
+        .nav-item { text-align: center; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; transition: color 0.2s, transform 0.2s; }
+        .nav-item.active { color: #c084fc; transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <div class="header">
+            <h3><i class="fa-solid fa-wallet" style="color: #22c55e;"></i> Wallet & Add Fund</h3>
+            <a href="profile.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Profile</a>
+        </div>
+
+        <div class="card">
+            <h4><i class="fa-solid fa-id-card"></i> Crypto & Exchange UID Setup</h4>
+            <div class="section-title-desc">Configure your preferred crypto exchange account for rewards & withdrawals.</div>
+            
+            <div class="current-account-box" id="currentCryptoBox">
+                <span><b>Current:</b> <span id="savedCryptoText">Not Set</span></span>
+            </div>
+
+            <div class="form-group">
+                <label>Select Exchange</label>
+                <select id="exchangeChoice" class="form-control">
+                    <option value="Binance">Binance</option>
+                    <option value="Bitget">Bitget</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Exchange UID</label>
+                <input type="text" id="exchangeUid" class="form-control" placeholder="Enter your Exchange UID (e.g. 9950270208)">
+            </div>
+        </div>
+
+        <div class="card">
+            <h4><i class="fa-solid fa-mobile-screen-button"></i> Local Payment Setup (MFS)</h4>
+            <div class="section-title-desc">Configure your personal mobile financial service account for local payouts.</div>
+
+            <div class="current-account-box" id="currentMfsBox">
+                <span><b>Current:</b> <span id="savedMfsText">Not Set</span></span>
+            </div>
+
+            <div class="form-group">
+                <label>Select MFS Provider</label>
+                <select id="mfsChoice" class="form-control">
+                    <option value="Nagad">Nagad</option>
+                    <option value="bKash">bKash</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Personal Mobile Number</label>
+                <input type="text" id="mfsNumber" class="form-control" placeholder="Enter 017xxxxxxxx">
+            </div>
+            <button class="action-btn" onclick="saveWalletDetails()">Save Wallet Settings</button>
+        </div>
+
+        <div class="bottom-action-bar">
+            <a href="profile.html" class="bottom-back-icon-btn">
+                <i class="fa-solid fa-arrow-left-long"></i> Back to Profile
+            </a>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Home</a>
+        <a class="nav-item" href="game.html"><i class="fa-solid fa-gamepad"></i>Game</a>
+        <a class="nav-item" href="task.html"><i class="fa-solid fa-list-check"></i>Task</a>
+        <a class="nav-item active" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {  
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",  
+            authDomain: "feldo-e6bdd.firebaseapp.com",  
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",  
+            projectId: "feldo-e6bdd",  
+            storageBucket: "feldo-e6bdd.firebasestorage.app",  
+            messagingSenderId: "880628628032",  
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",  
+            measurementId: "G-EHNFBDCDZ4"  
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+
+        db.ref('users/' + userId + '/wallet_info').on('value', snap => {
+            let data = snap.val();
+            if(data) {
+                if(data.exchangeChoice) document.getElementById('exchangeChoice').value = data.exchangeChoice;
+                if(data.exchangeUid) {
+                    document.getElementById('exchangeUid').value = data.exchangeUid;
+                    document.getElementById('savedCryptoText').innerText = `${data.exchangeChoice || 'Exchange'} - UID: ${data.exchangeUid}`;
+                }
+                if(data.mfsChoice) document.getElementById('mfsChoice').value = data.mfsChoice;
+                if(data.mfsNumber) {
+                    document.getElementById('mfsNumber').value = data.mfsNumber;
+                    document.getElementById('savedMfsText').innerText = `${data.mfsChoice || 'MFS'} - ${data.mfsNumber}`;
+                }
+            }
+        });
+
+        function saveWalletDetails() {
+            let exchangeChoice = document.getElementById('exchangeChoice').value;
+            let exchangeUid = document.getElementById('exchangeUid').value.trim();
+            let mfsChoice = document.getElementById('mfsChoice').value;
+            let mfsNumber = document.getElementById('mfsNumber').value.trim();
+
+            if (!exchangeUid && !mfsNumber) {
+                tg.showAlert("⚠️ Please enter at least your Exchange UID or MFS Number!");
+                return;
+            }
+
+            db.ref('users/' + userId + '/wallet_info').set({
+                exchangeChoice: exchangeChoice,
+                exchangeUid: exchangeUid,
+                mfsChoice: mfsChoice,
+                mfsNumber: mfsNumber,
+                updatedAt: Date.now()
+            }).then(() => {
+                tg.showAlert("✅ Wallet details saved successfully!");
+                window.location.href = "profile.html";
+            });
+        }
+
+        let touchStartX = 0;
+        window.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; });
+        window.addEventListener('touchend', e => {
+            let touchEndX = e.changedTouches[0].screenX;
+            let diff = touchEndX - touchStartX;
+            const container = document.getElementById('mainContainer');
+
+            if (Math.abs(diff) > 50) {
+                container.classList.add('page-slide-right');
+                setTimeout(() => { window.location.href = "profile.html"; }, 250);
+            }
+        });
+    </script>
+</body>
+</html>

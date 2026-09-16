@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feldo - Agent & Verification</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #141b2e;
+            --card-border: #24304f;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-purple: #6366f1;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 16px;
+            display: flex; justify-content: center;
+        }
+        .container { width: 100%; max-width: 480px; box-sizing: border-box; padding-bottom: 90px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .header h3 { margin: 0; color: #fff; background: linear-gradient(135deg, #818cf8, #22d3ee); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+        .card h4 { margin: 0 0 12px 0; font-size: 15px; color: #fbbf24; display: flex; align-items: center; gap: 8px; }
+
+        .method-tabs { display: flex; gap: 8px; margin-bottom: 14px; }
+        .method-tab { flex: 1; background: #0b0f19; border: 1px solid var(--card-border); padding: 10px; border-radius: 12px; text-align: center; font-size: 12px; font-weight: 700; cursor: pointer; color: var(--text-muted); transition: 0.2s; }
+        .method-tab.active { background: #6366f1; color: #fff; border-color: #6366f1; }
+
+        .method-content { display: none; }
+        .method-content.active { display: block; }
+
+        .info-box { background: #0b0f19; border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; margin-bottom: 12px; font-size: 12px; line-height: 1.6; }
+        
+        .copy-row { display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.03); border: 1px solid var(--card-border); padding: 8px 10px; border-radius: 8px; margin-top: 6px; margin-bottom: 8px; }
+        .copy-text { font-weight: bold; color: #34d399; font-size: 13px; font-family: monospace; }
+        .copy-btn { background: #6366f1; color: #fff; border: none; padding: 5px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.2s; }
+        .copy-btn:active { transform: scale(0.95); }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        .form-control { width: 100%; background: #0b0f19; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; box-sizing: border-box; font-size: 13px; outline: none; }
+        .form-control:focus { border-color: #6366f1; }
+
+        .action-btn { background: linear-gradient(135deg, #6366f1, #22d3ee); color: #fff; border: none; padding: 12px; border-radius: 12px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        .action-btn:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; }
+
+        .bottom-back-container { display: flex; gap: 10px; margin-top: 20px; }
+        .bottom-back-btn { flex: 1; background: #141b2e; border: 1px solid var(--card-border); color: #818cf8; padding: 12px; border-radius: 14px; font-size: 13px; font-weight: 700; text-decoration: none; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 8px; transition: 0.2s; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        .bottom-back-btn:hover { background: #1a2642; border-color: #6366f1; color: #fff; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h3><i class="fa-solid fa-user-check" style="color: #818cf8;"></i> Agent & Verification</h3>
+        </div>
+
+        <div class="card">
+            <h4><i class="fa-solid fa-shield-halved"></i> Choose Verification Method</h4>
+            
+            <div class="method-tabs">
+                <div class="method-tab active" onclick="switchMethod('freeTab', this)">1. Free Work (200K Gold)</div>
+                <div class="method-tab" onclick="switchMethod('directTab', this)">2. Direct ($10 / 1000 Tk)</div>
+            </div>
+
+            <!-- অপশন ১: ফ্রি কাজ / গোল্ড দিয়ে ভেরিফিকেশন -->
+            <div id="freeTab" class="method-content active">
+                <div class="info-box">
+                    <b>Free Task Verification:</b><br>
+                    গোল্ড দিয়ে ভেরিফিকেশন রিকোয়েস্ট পাঠাতে চাইলে আপনার অ্যাকাউন্ট থেকে মোট **200,000 Gold** কেটে নেওয়া হবে এবং এডমিন অ্যাপ্রুভ করলে অ্যাকাউন্ট ভেরিফাইড হবে।
+                </div>
+                <button class="action-btn" onclick="submitGoldVerification()">Send Request Using 200,000 Gold</button>
+            </div>
+
+            <!-- অপশন ২: সরাসরি পেইড ভেরিফিকেশন -->
+            <div id="directTab" class="method-content">
+                <div class="info-box">
+                    <b>Direct Paid Verification ($10 / 1000 Taka):</b><br>
+                    সরাসরি ভেরিফাইড হতে নিচের যেকোনো মাধ্যমে পেমেন্ট করুন:<br><br>
+
+                    <!-- বিকাশ, নগদ এবং UID বক্সগুলো এখানে ডাইনামিক্যালি রেন্ডার হবে -->
+                    <div id="paymentAccountsBox">
+                        <small style="color: var(--text-muted);">Loading payment accounts...</small>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>Payment Method Used</label>
+                    <select id="payMethod" class="form-control">
+                        <option value="bKash">bKash</option>
+                        <option value="Nagad">Nagad</option>
+                        <option value="Binance">Binance UID</option>
+                        <option value="Bitget">Bitget UID</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Sender Account / UID / TrxID</label>
+                    <input type="text" id="trxId" class="form-control" placeholder="e.g. 017xxxxxxxx or TrxID / TxHash">
+                </div>
+                <div class="form-group">
+                    <label>Upload Payment SS (Proof)</label>
+                    <input type="file" id="payScreenshot" class="form-control" accept="image/*" onchange="uploadVerificationScreenshot(this)" style="color: #94a3b8;">
+                    <input type="hidden" id="screenshotUrl">
+                    <small id="uploadStatus" style="color: #38bdf8; font-size: 10px; display: block; margin-top: 4px;"></small>
+                </div>
+                <button class="action-btn" id="submitPaidBtn" onclick="submitPaidVerification()">Submit Verification Request</button>
+            </div>
+        </div>
+
+        <!-- নিচে দুটি ব্যাক অপশন -->
+        <div class="bottom-back-container">
+            <a href="profile.html" class="bottom-back-btn"><i class="fa-solid fa-arrow-left"></i> Back to Profile</a>
+            <a href="index.html" class="bottom-back-btn"><i class="fa-solid fa-house"></i> Back to Home</a>
+        </div>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",
+            authDomain: "feldo-e6bdd.firebaseapp.com",
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",
+            projectId: "feldo-e6bdd",
+            storageBucket: "feldo-e6bdd.firebasestorage.app",
+            messagingSenderId: "880628628032",
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",
+            measurementId: "G-EHNFBDCDZ4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        let firstName = user ? (user.first_name || "User") : "User";
+        let username = user && user.username ? `@${user.username}` : `@user`;
+        let userGold = 0;
+
+        db.ref('users/' + userId).on('value', snap => {
+            let data = snap.val();
+            if(data) {
+                userGold = data.gold !== undefined ? data.gold : 0;
+            }
+        });
+
+        // শপ অ্যাডমিন পেমেন্ট সেটিংস থেকে বিকাশ, নগদ, বাইন্যান্স ও বিটগেট নম্বর/UID ডাইনামিক্যালি ফেচ করা
+        db.ref('sponsor_payment_settings').on('value', snap => {
+            let data = snap.val() || {};
+            let box = document.getElementById('paymentAccountsBox');
+            let html = "";
+
+            if (data.bkashNum && data.bkashNum.trim() !== "") {
+                html += `<b>🔹 bKash (Personal):</b><div class="copy-row"><span class="copy-text" id="bkashNumText">${data.bkashNum}</span><button class="copy-btn" onclick="copyText('bkashNumText', 'bKash Number')">Copy Number</button></div>`;
+            }
+            if (data.nagadNum && data.nagadNum.trim() !== "") {
+                html += `<b>🔹 Nagad (Personal):</b><div class="copy-row"><span class="copy-text" id="nagadNumText">${data.nagadNum}</span><button class="copy-btn" onclick="copyText('nagadNumText', 'Nagad Number')">Copy Number</button></div>`;
+            }
+            if (data.binanceUid && data.binanceUid.trim() !== "") {
+                html += `<b>🔹 Binance UID:</b><div class="copy-row"><span class="copy-text" id="binanceUidText">${data.binanceUid}</span><button class="copy-btn" onclick="copyText('binanceUidText', 'Binance UID')">Copy UID</button></div>`;
+            }
+            if (data.bitgetUid && data.bitgetUid.trim() !== "") {
+                html += `<b>🔹 Bitget UID:</b><div class="copy-row"><span class="copy-text" id="bitgetUidText">${data.bitgetUid}</span><button class="copy-btn" onclick="copyText('bitgetUidText', 'Bitget UID')">Copy UID</button></div>`;
+            }
+
+            box.innerHTML = html !== "" ? html : `<small style="color: var(--text-muted);">No payment methods active right now.</small>`;
+        });
+
+        function switchMethod(tabId, tabElement) {
+            document.querySelectorAll('.method-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.method-tab').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            tabElement.classList.add('active');
+        }
+
+        function copyText(elementId, labelName) {
+            let textToCopy = document.getElementById(elementId).innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                tg.showAlert(`✅ ${labelName} copied successfully!`);
+            });
+        }
+
+        // ক্লাউডিনারির নির্দিষ্ট ফোল্ডারে SS আপলোড করার ফাংশন
+        function uploadVerificationScreenshot(input) {
+            if (input.files && input.files[0]) {
+                let file = input.files[0];
+                let statusEl = document.getElementById('uploadStatus');
+                let submitBtn = document.getElementById('submitPaidBtn');
+                
+                statusEl.innerText = "Uploading SS...";
+                submitBtn.disabled = true;
+
+                let formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', 'ml_default');
+                formData.append('folder', 'Feldo MiniApp/agent');
+
+                fetch('https://api.cloudinary.com/v1_1/dyqegwdme/image/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.secure_url) {
+                        document.getElementById('screenshotUrl').value = data.secure_url;
+                        statusEl.innerText = "✅ SS uploaded successfully!";
+                        submitBtn.disabled = false;
+                    } else {
+                        statusEl.innerText = "❌ Upload failed. Try again.";
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusEl.innerText = "❌ Error uploading image.";
+                    submitBtn.disabled = false;
+                });
+            }
+        }
+
+        function submitGoldVerification() {
+            let requiredGold = 200000;
+            if (userGold >= requiredGold) {
+                if (confirm(`Send verification request using ${requiredGold.toLocaleString()} Gold?`)) {
+                    let newGold = userGold - requiredGold;
+                    db.ref('users/' + userId).update({ gold: newGold }).then(() => {
+                        let verificationReq = {
+                            userId: userId,
+                            userName: firstName,
+                            userUsername: username,
+                            method: "200K Gold Payment",
+                            trxId: "Deducted From Balance",
+                            screenshot: "",
+                            status: "Pending",
+                            timestamp: Date.now()
+                        };
+                        db.ref('verification_requests').push(verificationReq).then(() => {
+                            tg.showAlert("✅ Gold verification request submitted successfully to Admin!");
+                            window.location.href = "profile.html";
+                        });
+                    });
+                }
+            } else {
+                tg.showAlert(`❌ Insufficient Gold! You need at least ${requiredGold.toLocaleString()} Gold.`);
+            }
+        }
+
+        function submitPaidVerification() {
+            let method = document.getElementById('payMethod').value;
+            let trxId = document.getElementById('trxId').value.trim();
+            let screenshotUrl = document.getElementById('screenshotUrl').value.trim();
+
+            if (!trxId) {
+                tg.showAlert("⚠️ Please enter your sender number or TrxID / Hash!");
+                return;
+            }
+
+            if (!screenshotUrl) {
+                tg.showAlert("⚠️ Please wait for the payment SS to upload completely!");
+                return;
+            }
+
+            let verificationReq = {
+                userId: userId,
+                userName: firstName,
+                userUsername: username,
+                method: method,
+                trxId: trxId,
+                screenshot: screenshotUrl,
+                status: "Pending",
+                timestamp: Date.now()
+            };
+
+            db.ref('verification_requests').push(verificationReq).then(() => {
+                tg.showAlert("✅ Verification request submitted successfully! Admin will review your payment and SS.");
+                window.location.href = "profile.html";
+            });
+        }
+    </script>
+</body>
+</html>

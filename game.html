@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>feldo - Drop Game</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131c2e;
+            --card-border: #2a1b4e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-gradient: linear-gradient(135deg, #7c3aed 0%, #4c1d95 100%);
+            --modal-bg: #0b132b;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0 0 100px 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+            user-select: none;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+        .game-header {
+            background: var(--primary-gradient);
+            border-radius: 16px;
+            padding: 14px;
+            color: #fff;
+            margin-bottom: 14px;
+            box-shadow: 0 10px 25px -5px rgba(124, 58, 237, 0.4);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .balance-info { display: flex; gap: 8px; font-size: 11px; font-weight: 700; align-items: center; }
+        .bal-pill { background: rgba(255,255,255,0.15); padding: 4px 8px; border-radius: 8px; display: inline-flex; align-items: center; gap: 4px; }
+        
+        .rules-btn-header {
+            background: rgba(255, 255, 255, 0.2);
+            border: none;
+            color: #fff;
+            padding: 5px 10px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(4px);
+        }
+
+        .score-timer-bar {
+            display: flex;
+            justify-content: space-between;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 10px 16px;
+            border-radius: 12px;
+            margin-bottom: 14px;
+            font-weight: 700;
+            font-size: 13px;
+        }
+        .score-box { color: #fbbf24; }
+        .timer-box { color: #f43f5e; }
+
+        .game-canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 420px;
+            background: #070913;
+            border: 2px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            margin-bottom: 16px;
+            touch-action: none;
+        }
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+        }
+
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+        }
+        .action-btn {
+            background: #7c3aed;
+            color: #fff;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(124, 58, 237, 0.4);
+            width: 100%;
+        }
+        .action-btn:hover { background: #6d28d9; }
+        .action-btn:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; backdrop-filter: blur(6px); }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--modal-bg);
+            border: 2px solid #7c3aed;
+            border-radius: 22px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            z-index: 1001;
+            box-sizing: border-box;
+            text-align: left;
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.3);
+        }
+        .modal h3 { margin: 0 0 12px 0; font-size: 18px; color: #fbbf24; font-weight: 800; text-align: center; }
+        .modal ul { margin: 0; padding-left: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+        .modal ul li { margin-bottom: 8px; }
+        .close-modal-btn {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 10px;
+            width: 100%;
+            margin-top: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); 
+            width: 100%; max-width: 480px; background: var(--card-bg); 
+            border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; 
+            padding: 12px 0 14px 0; box-sizing: border-box; z-index: 100; 
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .nav-item { text-align: center; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; transition: color 0.2s, transform 0.2s; }
+        .nav-item.active { color: #c084fc; transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="game-header">
+            <h2 style="font-size: 15px; margin: 0;">⚡ feldo Game</h2>
+            <div class="balance-info">
+                <button class="rules-btn-header" onclick="openRulesModal()"><i class="fa-solid fa-circle-question"></i> Rules</button>
+                <div class="bal-pill" title="GP Balance">⚡ <span id="topGp">0</span> GP</div>
+            </div>
+        </div>
+
+        <div class="score-timer-bar">
+            <div class="score-box">Earned Gold: <span id="currentScore">0</span></div>
+            <div class="timer-box">⏳ Time: <span id="timeLeft">15</span>s</div>
+        </div>
+
+        <div class="game-canvas-wrapper">
+            <canvas id="gameCanvas"></canvas>
+        </div>
+
+        <div class="game-controls">
+            <button id="startBtn" class="action-btn" onclick="startGame()">Play Game (Free)</button>
+        </div>
+    </div>
+
+    <!-- Rules Modal Popup -->
+    <div class="overlay" id="overlay" onclick="closeRulesModal()"></div>
+    <div class="modal" id="rulesModal">
+        <h3>🎮 Game Rules</h3>
+        <ul>
+            <li>First <strong>1 play every day is FREE!</strong></li>
+            <li>After free play, play up to <strong>3 times</strong> using <strong>50 GP</strong> per play.</li>
+            <li><strong>VIP Verified Users:</strong> Play unlimited times as long as you have GP!</li>
+            <li>Catch Gold (🪙 +2), Stars (⭐️ +5), and Diamonds (💎 +5)!</li>
+            <li>Catch <strong>Freeze (❄️)</strong> to slow down falling items.</li>
+            <li>Avoid Bombs (💣 -2 points). Time limit: <strong>15 seconds</strong>!</li>
+        </ul>
+        <button class="close-modal-btn" onclick="closeRulesModal()">Got It</button>
+    </div>
+
+    <div class="bottom-nav">
+        <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Home</a>
+        <a class="nav-item active" href="game.html"><i class="fa-solid fa-gamepad"></i>Game</a>
+        <a class="nav-item" href="task.html"><i class="fa-solid fa-list-check"></i>Task</a>
+        <a class="nav-item" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",
+            authDomain: "feldo-e6bdd.firebaseapp.com",
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",
+            projectId: "feldo-e6bdd",
+            storageBucket: "feldo-e6bdd.firebasestorage.app",
+            messagingSenderId: "880628628032",
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",
+            measurementId: "G-EHNFBDCDZ4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        let userRef = db.ref('users/' + userId);
+
+        let userGp = 0;
+        let freePlaysLeft = 1;
+        let paidPlaysLeft = 3;
+        let isVerified = false;
+        let limitResetTime = 0;
+
+        let dynamicSpawnInterval = 500;  
+        let dynamicSpeedMultiplier = 1.0; 
+
+        db.ref('game_settings').on('value', snap => {
+            let settings = snap.val();
+            if (settings) {
+                dynamicSpawnInterval = settings.spawnInterval || 500;
+                dynamicSpeedMultiplier = settings.speedMultiplier || 1.0;
+            }
+        });
+
+        userRef.on('value', snap => {
+            let data = snap.val() || {};
+            userGp = data.gp !== undefined ? data.gp : (data.points || 0);
+            isVerified = data.isVerified === true;
+            limitResetTime = data.limitResetTime || 0;
+            
+            let today = new Date().toDateString();
+            if (data.lastPlayDate !== today) {
+                freePlaysLeft = 1;
+                paidPlaysLeft = 3;
+                userRef.update({ lastPlayDate: today, freePlaysLeft: 1, paidPlaysLeft: 3 });
+            } else {
+                freePlaysLeft = data.freePlaysLeft !== undefined ? data.freePlaysLeft : 1;
+                paidPlaysLeft = data.paidPlaysLeft !== undefined ? data.paidPlaysLeft : 3;
+            }
+
+            document.getElementById('topGp').innerText = userGp.toLocaleString();
+            updatePlayButtonText();
+        });
+
+        const TWENTY_FOUR_HOURS = 24 * 60 * 60 * 1000;
+
+        function updatePlayButtonText() {
+            let btn = document.getElementById('startBtn');
+            if (!btn) return;
+
+            // যদি ইউজার ভেরিফাইড অ্যাকাউন্ট হয়
+            if (isVerified) {
+                if (userGp >= 0) {
+                    btn.innerText = `Play Game (VIP Unlimited)`;
+                    btn.disabled = false;
+                    btn.style.background = "linear-gradient(135deg, #10b981, #059669)";
+                } else {
+                    btn.innerText = `Insufficient GP Balance`;
+                    btn.disabled = true;
+                    btn.style.background = "#334155";
+                }
+                return;
+            }
+
+            // সাধারণ ইউজারদের জন্য লিমিট চেক ও কাউন্টডাউন
+            if (freePlaysLeft > 0) {
+                btn.innerText = `Play Game (1 Free Left)`;
+                btn.disabled = false;
+                btn.style.background = "#7c3aed";
+            } else if (paidPlaysLeft > 0) {
+                btn.innerText = `Play Game (-50 GP) [${paidPlaysLeft} Left]`;
+                btn.disabled = false;
+                btn.style.background = "#7c3aed";
+            } else {
+                // লিমিট শেষ হলে ২৪ ঘণ্টার কাউন্টডাউন ক্যালকুলেট করা
+                let now = Date.now();
+                if (limitResetTime === 0) {
+                    limitResetTime = now + TWENTY_FOUR_HOURS;
+                    userRef.update({ limitResetTime: limitResetTime });
+                }
+
+                let timeLeft = limitResetTime - now;
+                if (timeLeft > 0) {
+                    let hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+
+                    let hStr = String(hours).padStart(2, '0');
+                    let mStr = String(minutes).padStart(2, '0');
+                    let sStr = String(seconds).padStart(2, '0');
+
+                    btn.disabled = true;
+                    btn.style.background = "#334155";
+                    btn.innerHTML = `<i class="fa-solid fa-clock"></i> Resets in: ${hStr}h ${mStr}m ${sStr}s`;
+                } else {
+                    // টাইম শেষ হলে রিসেট করে দেওয়া
+                    freePlaysLeft = 1;
+                    paidPlaysLeft = 3;
+                    limitResetTime = 0;
+                    userRef.update({ freePlaysLeft: 1, paidPlaysLeft: 3, limitResetTime: 0 });
+                    updatePlayButtonText();
+                }
+            }
+        }
+
+        // প্রতি ১ সেকেন্ড পরপর কাউন্টডাউন আপডেট করার জন্য
+        setInterval(() => {
+            if (!isVerified && (freePlaysLeft === 0 && paidPlaysLeft === 0)) {
+                updatePlayButtonText();
+            }
+        }, 1000);
+
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+
+        canvas.width = 360;
+        canvas.height = 420;
+
+        let gameRunning = false;
+        let score = 0;
+        let items = [];
+        let gameInterval, itemSpawner, countdownTimer;
+        let timeLeftSec = 15;
+        let isFrozen = false;
+        let freezeTimeout = null;
+
+        function openRulesModal() {
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('rulesModal').style.display = 'block';
+        }
+
+        function closeRulesModal() {
+            document.getElementById('overlay').style.display = 'none';
+            document.getElementById('rulesModal').style.display = 'none';
+        }
+
+        function startGame() {
+            let cost = 0;
+
+            if (isVerified) {
+                // ভেরিফাইড ইউজারদের ফি লাগবে না, তবে GP চেক হতে পারে চাইলে
+                cost = 0;
+            } else if (freePlaysLeft > 0) {
+                cost = 0;
+            } else if (paidPlaysLeft > 0) {
+                cost = 50;
+                if (userGp < 50) {
+                    tg.showAlert("❌ Insufficient GP Fuel! You need 50 GP to play.", () => {
+                        window.location.href = 'task.html';
+                    });
+                    return;
+                }
+            } else {
+                tg.showAlert("❌ Daily play limit reached!");
+                return;
+            }
+
+            let newGp = userGp - cost;
+            let newFreePlays = freePlaysLeft;
+            let newPaidPlays = paidPlaysLeft;
+            let newResetTime = limitResetTime;
+
+            if (!isVerified) {
+                if (freePlaysLeft > 0) {
+                    newFreePlays--;
+                } else {
+                    newPaidPlays--;
+                    if (newPaidPlays === 0) {
+                        newResetTime = Date.now() + TWENTY_FOUR_HOURS;
+                    }
+                }
+            }
+
+            userRef.update({ 
+                gp: newGp, 
+                points: newGp, 
+                freePlaysLeft: newFreePlays,
+                paidPlaysLeft: newPaidPlays,
+                limitResetTime: newResetTime
+            }).then(() => {
+                freePlaysLeft = newFreePlays;
+                paidPlaysLeft = newPaidPlays;
+                limitResetTime = newResetTime;
+
+                gameRunning = true;
+                score = 0;
+                items = [];
+                timeLeftSec = 15;
+                isFrozen = false;
+
+                document.getElementById('currentScore').innerText = score;
+                document.getElementById('timeLeft').innerText = timeLeftSec;
+                document.getElementById('startBtn').disabled = true;
+                document.getElementById('startBtn').innerText = "Game Running...";
+
+                itemSpawner = setInterval(spawnItem, dynamicSpawnInterval);
+                gameInterval = requestAnimationFrame(updateGame);
+
+                countdownTimer = setInterval(() => {
+                    timeLeftSec--;
+                    document.getElementById('timeLeft').innerText = timeLeftSec;
+                    if (timeLeftSec <= 0) {
+                        clearInterval(countdownTimer);
+                        endGame();
+                    }
+                }, 1000);
+            });
+        }
+
+        function spawnItem() {
+            if (!gameRunning) return;
+            let rand = Math.random();
+            let type = "coin"; 
+            let text = "🪙";
+            let points = 2; 
+
+            if (rand < 0.15) {
+                type = "bomb"; text = "💣"; points = -2; 
+            } else if (rand < 0.35) {
+                type = "star"; text = "⭐️"; points = 5; 
+            } else if (rand < 0.45) {
+                type = "diamond"; text = "💎"; points = 5; 
+            } else if (rand < 0.53) {
+                type = "freeze"; text = "❄️"; points = 0;
+            }
+
+            let currentMultiplier = isFrozen ? (dynamicSpeedMultiplier * 0.4) : dynamicSpeedMultiplier;
+
+            items.push({
+                x: Math.random() * (canvas.width - 40) + 20,
+                y: -30,
+                speed: (Math.random() * 1.0 + 1.5) * currentMultiplier,
+                type: type,
+                text: text,
+                points: points
+            });
+        }
+
+        function updateGame() {
+            if (!gameRunning) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                item.y += item.speed;
+
+                ctx.font = "26px Arial";
+                ctx.fillText(item.text, item.x - 12, item.y + 8);
+
+                if (item.y > canvas.height + 30) {
+                    items.splice(i, 1);
+                }
+            }
+
+            gameInterval = requestAnimationFrame(updateGame);
+        }
+
+        canvas.addEventListener('pointerdown', (e) => {
+            if (!gameRunning) return;
+            const rect = canvas.getBoundingClientRect();
+            const clickX = (e.clientX - rect.left) * (canvas.width / rect.width);
+            const clickY = (e.clientY - rect.top) * (canvas.height / rect.height);
+
+            for (let i = items.length - 1; i >= 0; i--) {
+                let item = items[i];
+                let dist = Math.hypot(clickX - item.x, clickY - item.y);
+                if (dist < 45) {
+                    if (item.type === "freeze") {
+                        isFrozen = true;
+                        if (freezeTimeout) clearTimeout(freezeTimeout);
+                        freezeTimeout = setTimeout(() => { isFrozen = false; }, 3000); 
+                    } else {
+                        score = Math.max(0, score + item.points);
+                        document.getElementById('currentScore').innerText = score;
+                    }
+                    items.splice(i, 1);
+                    break;
+                }
+            }
+        });
+
+        function endGame() {
+            gameRunning = false;
+            clearInterval(itemSpawner);
+            clearInterval(countdownTimer);
+            cancelAnimationFrame(gameInterval);
+
+            userRef.once('value').then(snap => {
+                let data = snap.val() || {};
+                let currentGold = data.gold !== undefined ? data.gold : 0;
+                let newGold = currentGold + score;
+
+                userRef.update({ gold: newGold }).then(() => {
+                    tg.showAlert(`🎉 Time's up! You earned 🪙 ${score} Gold Points.`);
+                    updatePlayButtonText();
+                });
+            });
+        }
+    </script>
+</body>
+</html>

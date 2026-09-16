@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feldo - Boost Center</title>
+    
+    <!-- Telegram Mini App & Richads Integration Script (banner-এর জন্য) -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #141b2e;
+            --card-border: #24304f;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-gradient: linear-gradient(135deg, #6366f1 0%, #3730a3 100%);
+            --orange-btn: linear-gradient(135deg, #f59e0b, #d97706);
+            --green-btn: linear-gradient(135deg, #10b981, #059669);
+            --blue-btn: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            --modal-bg: #0b132b;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0 0 90px 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            box-sizing: border-box;
+        }
+
+        .boost-header {
+            background: var(--primary-gradient);
+            border-radius: 16px;
+            padding: 20px;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4);
+        }
+        .boost-header h2 { margin: 0 0 6px 0; font-size: 20px; color: #fff; }
+        .boost-header p { margin: 0; font-size: 12px; opacity: 0.9; }
+
+        .boost-list {
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            margin-bottom: 10px;
+        }
+
+        .boost-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 16px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 14px;
+        }
+
+        .coin-icon {
+            width: 48px; height: 48px;
+            background: rgba(99, 102, 241, 0.2);
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            color: #fbbf24;
+            font-size: 22px;
+            border: 1.5px solid #fbbf24;
+            flex-shrink: 0;
+        }
+
+        .coin-info h4 { margin: 0 0 3px 0; font-size: 16px; font-weight: 700; color: #fff; }
+        .coin-info p { margin: 0; font-size: 11px; color: var(--text-muted); line-height: 1.4; }
+
+        .card-buttons {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .action-btn {
+            border: none;
+            padding: 11px 8px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: center;
+            color: #fff;
+            transition: 0.2s;
+        }
+        .claim-btn {
+            background: var(--orange-btn);
+            box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+        }
+        .claim-btn:disabled {
+            background: #334155;
+            color: #94a3b8;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .claim-btn:active { transform: scale(0.97); }
+
+        .boost-action-btn {
+            background: var(--green-btn);
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+        }
+        .boost-action-btn.active {
+            background: var(--blue-btn);
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+        }
+
+        /* Modal Popups */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; backdrop-filter: blur(6px); }
+        .modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--modal-bg);
+            border: 2px solid #6366f1;
+            border-radius: 22px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            z-index: 1001;
+            box-sizing: border-box;
+            text-align: center;
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.3);
+        }
+        .modal h3 { margin: 0 0 8px 0; font-size: 18px; color: #fbbf24; font-weight: 800; }
+        .modal p { font-size: 12px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.4; }
+        
+        .modal-btn {
+            background: #111c38;
+            border: 1px solid #2a3b68;
+            color: white;
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            margin-bottom: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        .modal-btn:hover { background: #1e293b; border-color: #6366f1; }
+        
+        .uid-box {
+            background: #050a14;
+            border: 1px dashed #fbbf24;
+            padding: 10px;
+            border-radius: 10px;
+            font-size: 12px;
+            color: #fbbf24;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 14px;
+        }
+        .copy-uid-btn { background: #fbbf24; color: #000; border: none; padding: 5px 10px; border-radius: 6px; font-size: 10px; font-weight: bold; cursor: pointer; }
+        
+        .input-label { text-align: left; font-size: 11px; color: #c084fc; margin-bottom: 4px; font-weight: 600; }
+        
+        .form-input {
+            width: 100%;
+            background: #050a14;
+            border: 1px solid #2a3b68;
+            padding: 10px;
+            border-radius: 10px;
+            color: #fff;
+            font-size: 12px;
+            box-sizing: border-box;
+            margin-bottom: 14px;
+            outline: none;
+        }
+
+        input[type="file"] { color: #94a3b8; background: #050a14; }
+        input[type="file"]::file-selector-button {
+            background: linear-gradient(135deg, #6366f1, #3730a3);
+            color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 700; cursor: pointer; margin-right: 8px;
+        }
+
+        .btn-submit-proof {
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #ffffff; border: none; width: 100%; padding: 12px; border-radius: 10px; font-size: 13px; font-weight: 700; cursor: pointer;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.4);
+        }
+        .btn-submit-proof:disabled { background: #334155; color: #94a3b8; cursor: not-allowed; box-shadow: none; }
+        .cancel-text { color: #ef4444; font-size: 12px; font-weight: bold; cursor: pointer; margin-top: 10px; display: inline-block; }
+
+        /* বটম নেভিগেশন বার */
+        .bottom-nav {
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); 
+            width: 100%; max-width: 480px; background: var(--card-bg); 
+            border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; 
+            padding: 10px 0 12px 0; box-sizing: border-box; z-index: 9999; 
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.5);
+        }
+        .nav-item { text-align: center; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; transition: color 0.2s, transform 0.2s; }
+        .nav-item.active { color: #c084fc; transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container" id="mainContainer">
+        <div class="boost-header">
+            <h2>⚡ FELDO BOOST CENTER</h2>
+            <p>Active Boost Services & Rewards (12 Hours Interval)</p>
+        </div>
+
+        <div class="boost-list" id="boosts-container">
+            <!-- Dynamic Boost Items -->
+        </div>
+
+    </div>
+
+    <!-- Overlay & Modals -->
+    <div class="overlay" id="overlay" onclick="closeModals()"></div>
+
+    <!-- Modal 1: Select Payment Method -->
+    <div class="modal" id="paymentMethodModal">
+        <h3>Boost <span id="modal-coin-name">Service</span></h3>
+        <p>Choose your preferred payment method to boost this item.</p>
+        <div id="paymentMethodsContainer"></div>
+        <span class="cancel-text" onclick="closeModals()">Cancel</span>
+    </div>
+
+    <!-- Modal 2: Submit Proof -->
+    <div class="modal" id="proofModal">
+        <h3 id="proof-title">Payment Proof</h3>
+        <p>Send payment to the account below, then enter your details and upload screenshot.</p>
+        
+        <div class="uid-box">
+            <span id="admin-account-text">Account - </span>
+            <button class="copy-uid-btn" onclick="copyAdminAccount()">Copy</button>
+        </div>
+
+        <div class="input-label">Telegram User ID:</div>
+        <input type="text" id="user-tg-id" class="form-input" readonly style="color: #fbbf24; font-weight: bold;">
+
+        <div class="input-label">Sender Number / Account Details:</div>
+        <input type="text" id="sender-number" class="form-input" placeholder="e.g. 017xxxxxxxx or Wallet ID">
+
+        <div class="input-label">Transaction ID / TXID:</div>
+        <input type="text" id="transaction-id" class="form-input" placeholder="Enter TXID / TrxID">
+
+        <div class="input-label">Upload Payment Proof / Screenshot:</div>
+        <input type="file" id="proof-file" class="form-input" accept="image/*" onchange="uploadBoostScreenshot(this)">
+        <input type="hidden" id="screenshotUrl">
+        <small id="uploadStatus" style="color: #38bdf8; font-size: 10px; display: block; margin-bottom: 12px; text-align: left;"></small>
+
+        <button class="btn-submit-proof" id="submitProofBtn" onclick="submitBoostProof()">Submit Proof</button>
+        <br>
+        <span class="cancel-text" onclick="closeModals()">Cancel</span>
+    </div>
+
+    <!-- নেভিগেশন বার -->
+    <div class="bottom-nav" id="bottomNav">
+        <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Home</a>
+        <a class="nav-item" href="game.html"><i class="fa-solid fa-gamepad"></i>Game</a>
+        <a class="nav-item" href="task.html"><i class="fa-solid fa-list-check"></i>Task</a>
+        <a class="nav-item active" href="boost.html"><i class="fa-solid fa-bolt"></i>Boost</a>
+        <a class="nav-item" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",
+            authDomain: "feldo-e6bdd.firebaseapp.com",
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",
+            projectId: "feldo-e6bdd",
+            storageBucket: "feldo-e6bdd.firebasestorage.app",
+            messagingSenderId: "880628628032",
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",
+            measurementId: "G-EHNFBDCDZ4"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        let userName = user ? (user.first_name || "User") : "User";
+        let userRef = db.ref('users/' + userId);
+
+        const COOLDOWN_TIME = 12 * 60 * 60 * 1000;
+
+        let boostItems = [
+            { id: 'item1', name: 'Boost Alpha', icon: 'fa-fire', normalGp: 50, boostedGp: 500, duration: '5 Days', price: '$2.5' },
+            { id: 'item2', name: 'Boost Beta', icon: 'fa-bolt', normalGp: 50, boostedGp: 500, duration: '10 Days', price: '$5' },
+            { id: 'item3', name: 'Boost Gamma', icon: 'fa-gem', normalGp: 50, boostedGp: 500, duration: '15 Days', price: '$8' },
+            { id: 'item4', name: 'Boost Delta', icon: 'fa-coins', normalGp: 50, boostedGp: 500, duration: '20 Days', price: '$10' },
+            { id: 'item5', name: 'Boost Omega', icon: 'fa-shield-halved', normalGp: 50, boostedGp: 500, duration: '25 Days', price: '$15' },
+            { id: 'item6', name: 'Boost Zeta', icon: 'fa-rocket', normalGp: 50, boostedGp: 500, duration: '30 Days', price: '$20' }
+        ];
+
+        let userData = {};
+        let selectedBoostId = "";
+        let selectedBoostName = "";
+        let selectedRewardGp = 0;
+        let selectedMethod = "";
+        let currentAdminAccount = "";
+        let paymentSettings = {};
+
+        db.ref('sponsor_payment_settings').on('value', snap => {
+            paymentSettings = snap.val() || {};
+        });
+
+        userRef.on('value', (snapshot) => {
+            userData = snapshot.val() || {};
+            renderBoosts();
+        });
+
+        function renderBoosts() {
+            const container = document.getElementById('boosts-container');
+            container.innerHTML = '';
+            let currentTime = Date.now();
+            let boosts = userData.boosts || {};
+
+            boostItems.forEach(item => {
+                let rewardGp = item.normalGp;
+                let boostBtnText = "Boost";
+                let boostBtnClass = "action-btn boost-action-btn";
+
+                if (boosts[item.id] && boosts[item.id].expireTime > currentTime) {
+                    rewardGp = item.boostedGp;
+                    boostBtnText = "Boosted (Active)";
+                    boostBtnClass = "action-btn boost-action-btn active";
+                }
+
+                let lastClaim = userData['lastClaim_' + item.id] || 0;
+                let timeLeft = (lastClaim + COOLDOWN_TIME) - currentTime;
+                let claimBtnDisabled = false;
+                let claimBtnText = `Claim ${rewardGp} GP`;
+
+                if (timeLeft > 0) {
+                    claimBtnDisabled = true;
+                    let hours = Math.floor((timeLeft % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+                    let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                    let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                    claimBtnText = `${hours}h ${minutes}m ${seconds}s`;
+                }
+
+                container.innerHTML += `
+                    <div class="boost-card">
+                        <div class="card-top">
+                            <div class="coin-icon"><i class="fa-solid ${item.icon}"></i></div>
+                            <div class="coin-info">
+                                <h4>${item.name}</h4>
+                                <p>Normal: ${item.normalGp} GP | Boosted: ${item.boostedGp} GP<br><b style="color:#fbbf24">${item.duration} | ${item.price}</b></p>
+                            </div>
+                        </div>
+                        <div class="card-buttons">
+                            <button id="claimBtn_${item.id}" class="action-btn claim-btn" ${claimBtnDisabled ? 'disabled' : ''} onclick="executeClaimReward('${item.id}', ${rewardGp})">${claimBtnText}</button>
+                            <button class="${boostBtnClass}" onclick="openPaymentModal('${item.id}', '${item.name}', '${item.duration}', '${item.price}')">${boostBtnText}</button>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+
+        function executeClaimReward(id, gp) {
+            let now = Date.now();
+            userRef.once('value').then((snapshot) => {
+                let data = snapshot.val() || {};
+                let currentPoints = data.points !== undefined ? data.points : (data.gp || 0);
+                let newPoints = currentPoints + gp;
+
+                let updateData = {
+                    points: newPoints,
+                    gp: newPoints
+                };
+                updateData['lastClaim_' + id] = now;
+
+                userRef.update(updateData).then(() => {
+                    tg.showAlert(`🎉 Successfully claimed ${gp} GP!`);
+                });
+            });
+        }
+
+        setInterval(() => {
+            if (document.getElementById('boosts-container')) {
+                renderBoosts();
+            }
+        }, 1000);
+
+        let selectedDuration = "";
+        let selectedPrice = "";
+
+        function openPaymentModal(boostId, boostName, duration, price) {
+            selectedBoostId = boostId;
+            selectedBoostName = boostName;
+            selectedDuration = duration;
+            selectedPrice = price;
+
+            document.getElementById('modal-coin-name').innerText = `${boostName} (${duration} - ${price})`;
+            
+            let methodsBox = document.getElementById('paymentMethodsContainer');
+            let html = "";
+
+            if (paymentSettings.binanceUid && paymentSettings.binanceUid.trim() !== "") {
+                html += `<button class="modal-btn" onclick="openProofModal('Binance Pay', '${paymentSettings.binanceUid}')"><i class="fa-solid fa-wallet" style="color: #f59e0b; font-size: 18px;"></i> Binance Pay</button>`;
+            }
+            if (paymentSettings.bitgetUid && paymentSettings.bitgetUid.trim() !== "") {
+                html += `<button class="modal-btn" onclick="openProofModal('Bitget Wallet', '${paymentSettings.bitgetUid}')"><i class="fa-solid fa-shield-halved" style="color: #38bdf8; font-size: 18px;"></i> Bitget Wallet</button>`;
+            }
+            if (paymentSettings.nagadNum && paymentSettings.nagadNum.trim() !== "") {
+                html += `<button class="modal-btn" onclick="openProofModal('Nagad', '${paymentSettings.nagadNum}')"><i class="fa-solid fa-mobile-screen" style="color: #f97316; font-size: 18px;"></i> Nagad: ${paymentSettings.nagadNum}</button>`;
+            }
+            if (paymentSettings.bkashNum && paymentSettings.bkashNum.trim() !== "") {
+                html += `<button class="modal-btn" onclick="openProofModal('Bkash', '${paymentSettings.bkashNum}')"><i class="fa-solid fa-mobile-screen" style="color: #ec4899; font-size: 18px;"></i> bKash: ${paymentSettings.bkashNum}</button>`;
+            }
+
+            methodsBox.innerHTML = html !== "" ? html : `<p style="color:#ef4444;">No payment methods active currently!</p>`;
+
+            document.getElementById('overlay').style.display = 'block';
+            document.getElementById('paymentMethodModal').style.display = 'block';
+        }
+
+        function openProofModal(method, adminAccount) {
+            selectedMethod = method;
+            currentAdminAccount = adminAccount;
+            document.getElementById('paymentMethodModal').style.display = 'none';
+            
+            document.getElementById('proof-title').innerText = `${method} Proof (${selectedBoostName})`;
+            document.getElementById('admin-account-text').innerText = `${method} Account - ${adminAccount}`;
+            document.getElementById('user-tg-id').value = userId;
+            document.getElementById('sender-number').value = "";
+            document.getElementById('transaction-id').value = "";
+            document.getElementById('proof-file').value = "";
+            document.getElementById('screenshotUrl').value = "";
+            document.getElementById('uploadStatus').innerText = "";
+            document.getElementById('submitProofBtn').disabled = false;
+
+            document.getElementById('proofModal').style.display = 'block';
+        }
+
+        function copyAdminAccount() {
+            navigator.clipboard.writeText(currentAdminAccount).then(() => {
+                tg.showAlert(`Copied: ${currentAdminAccount}`);
+            });
+        }
+
+        function uploadBoostScreenshot(input) {
+            if (input.files && input.files[0]) {
+                let file = input.files[0];
+                let statusEl = document.getElementById('uploadStatus');
+                let submitBtn = document.getElementById('submitProofBtn');
+                
+                statusEl.innerText = "Uploading screenshot...";
+                submitBtn.disabled = true;
+
+                let formData = new FormData();
+                formData.append('file', file);
+                formData.append('upload_preset', 'ml_default');
+                formData.append('folder', 'Feldo MiniApp/boost');
+
+                fetch('https://api.cloudinary.com/v1_1/dyqegwdme/image/upload', {
+                    method: 'POST',
+                    body: formData
+                })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.secure_url) {
+                        document.getElementById('screenshotUrl').value = data.secure_url;
+                        statusEl.innerText = "✅ Screenshot uploaded successfully!";
+                        submitBtn.disabled = false;
+                    } else {
+                        statusEl.innerText = "❌ Upload failed. Try again.";
+                        submitBtn.disabled = false;
+                    }
+                })
+                .catch(err => {
+                    console.error(err);
+                    statusEl.innerText = "❌ Error uploading image.";
+                    submitBtn.disabled = false;
+                });
+            }
+        }
+
+        function submitBoostProof() {
+            let senderNumber = document.getElementById('sender-number').value.trim();
+            let transactionId = document.getElementById('transaction-id').value.trim();
+            let screenshotUrl = document.getElementById('screenshotUrl').value.trim();
+
+            if (!senderNumber || !transactionId) {
+                tg.showAlert("⚠️ Please enter your Sender Number and Transaction ID (TXID)!");
+                return;
+            }
+
+            if (!screenshotUrl) {
+                tg.showAlert("⚠️ Please wait for the payment screenshot to upload completely!");
+                return;
+            }
+
+            let boostRequest = {
+                userId: userId,
+                userName: userName,
+                serviceId: selectedBoostId,
+                serviceName: selectedBoostName,
+                duration: selectedDuration,
+                price: selectedPrice,
+                method: selectedMethod,
+                senderNumber: senderNumber,
+                transactionId: transactionId,
+                screenshot: screenshotUrl,
+                status: "Pending",
+                timestamp: Date.now()
+            };
+
+            db.ref(`users/${userId}/pending_boosts/${selectedBoostId}`).set(boostRequest).then(() => {
+                closeModals();
+                tg.showAlert("🎉 Boost payment proof submitted successfully! Admin will review and activate your service.");
+            });
+        }
+
+        function closeModals() {
+            document.getElementById('overlay').style.display = 'none';
+            let adModal = document.getElementById('adModal');
+            if(adModal) adModal.style.display = 'none';
+            document.getElementById('paymentMethodModal').style.display = 'none';
+            document.getElementById('proofModal').style.display = 'none';
+        }
+    </script>
+</body>
+</html>

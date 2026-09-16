@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>feldo - Special Event Ads</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131c2e;
+            --card-border: #2a1b4e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 16px;
+            display: flex; justify-content: center;
+        }
+        .container { width: 100%; max-width: 480px; box-sizing: border-box; padding-bottom: 90px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .header h3 { margin: 0; color: #fff; background: linear-gradient(135deg, #c084fc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .back-btn { background: #2a1b4e; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 5px; }
+
+        .banner-card {
+            background: linear-gradient(135deg, #10b981, #047857);
+            border-radius: 18px; padding: 16px; color: #fff; text-align: center; margin-bottom: 16px;
+            box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+        }
+        .banner-card h2 { margin: 0 0 6px 0; font-size: 20px; }
+        .banner-card p { margin: 0; font-size: 12px; opacity: 0.95; }
+
+        .event-ads-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+        .event-ad-card { background: linear-gradient(150deg, rgba(16, 185, 129, 0.15), rgba(13, 148, 136, 0.25)); border: 1px solid rgba(16, 185, 129, 0.4); border-radius: 16px; padding: 14px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; }
+        .event-ad-icon { width: 40px; height: 40px; border-radius: 12px; background: rgba(16, 185, 129, 0.2); color: #34d399; display: flex; align-items: center; justify-content: center; font-size: 18px; margin: 0 auto 8px auto; }
+        .event-ad-card h4 { margin: 0 0 2px 0; font-size: 13px; color: #fff; font-weight: 700; }
+        .event-ad-card p { margin: 0 0 10px 0; font-size: 11px; color: #fbbf24; font-weight: 600; }
+        .event-ad-btn { width: 100%; background: linear-gradient(135deg, #10b981, #047857); color: #fff; border: none; padding: 8px; border-radius: 10px; font-size: 11px; font-weight: bold; cursor: pointer; transition: 0.2s; }
+        .event-ad-btn:disabled { background: #334155 !important; color: #94a3b8; cursor: not-allowed; }
+
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+            width: 100%; max-width: 480px; background: var(--card-bg); 
+            border-top: 1px solid var(--card-border); display: flex; justify-content: space-around; 
+            padding: 12px 0 16px 0; box-sizing: border-box; z-index: 9999; 
+        }
+        .nav-item { text-align: center; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; }
+        .nav-item.active { color: #c084fc; }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h3><i class="fa-solid fa-calendar-star" style="color: #10b981;"></i> Special Events</h3>
+            <a href="index.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Home</a>
+        </div>
+
+        <div class="banner-card">
+            <h2>🎁 48h Event Rewards</h2>
+            <p>Watch special event ads every 48 hours to collect bonus GP fuel!</p>
+        </div>
+
+        <div class="event-ads-grid">
+            <div class="event-ad-card">
+                <div>
+                    <div class="event-ad-icon"><i class="fa-solid fa-gift"></i></div>
+                    <h4>Event Ad #1</h4>
+                    <p>+30 GP Fuel</p>
+                </div>
+                <button id="eventAdBtn1" class="event-ad-btn" onclick="watchEventAd(30, 'eventAdBtn1', 'lastEventAdTime1')">Watch Ad</button>
+            </div>
+
+            <div class="event-ad-card">
+                <div>
+                    <div class="event-ad-icon"><i class="fa-solid fa-gift"></i></div>
+                    <h4>Event Ad #2</h4>
+                    <p>+30 GP Fuel</p>
+                </div>
+                <button id="eventAdBtn2" class="event-ad-btn" onclick="watchEventAd(30, 'eventAdBtn2', 'lastEventAdTime2')">Watch Ad</button>
+            </div>
+
+            <div class="event-ad-card">
+                <div>
+                    <div class="event-ad-icon"><i class="fa-solid fa-gift"></i></div>
+                    <h4>Event Ad #3</h4>
+                    <p>+30 GP Fuel</p>
+                </div>
+                <button id="eventAdBtn3" class="event-ad-btn" onclick="watchEventAd(30, 'eventAdBtn3', 'lastEventAdTime3')">Watch Ad</button>
+            </div>
+
+            <div class="event-ad-card">
+                <div>
+                    <div class="event-ad-icon"><i class="fa-solid fa-gift"></i></div>
+                    <h4>Event Ad #4</h4>
+                    <p>+30 GP Fuel</p>
+                </div>
+                <button id="eventAdBtn4" class="event-ad-btn" onclick="watchEventAd(30, 'eventAdBtn4', 'lastEventAdTime4')">Watch Ad</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav">
+        <a class="nav-item" href="index.html"><i class="fa-solid fa-house"></i>Home</a>
+        <a class="nav-item" href="game.html"><i class="fa-solid fa-gamepad"></i>Game</a>
+        <a class="nav-item" href="task.html"><i class="fa-solid fa-list-check"></i>Task</a>
+        <a class="nav-item" href="shop.html"><i class="fa-solid fa-store"></i>Shop</a>
+        <a class="nav-item" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",
+            authDomain: "feldo-e6bdd.firebaseapp.com",
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",
+            projectId: "feldo-e6bdd",
+            storageBucket: "feldo-e6bdd.firebasestorage.app",
+            messagingSenderId: "880628628032",
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",
+            measurementId: "G-EHNFBDCDZ4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        let userRef = db.ref('users/' + userId);
+        let userData = {};
+
+        userRef.on('value', snap => {
+            userData = snap.val() || {};
+            renderEventAds();
+        });
+
+        const INTERVAL_48H = 48 * 60 * 60 * 1000;
+
+        function renderEventAds() {
+            renderEventAdButton('eventAdBtn1', userData.lastEventAdTime1 || 0);
+            renderEventAdButton('eventAdBtn2', userData.lastEventAdTime2 || 0);
+            renderEventAdButton('eventAdBtn3', userData.lastEventAdTime3 || 0);
+            renderEventAdButton('eventAdBtn4', userData.lastEventAdTime4 || 0);
+        }
+
+        function renderEventAdButton(btnId, lastTime) {
+            let btn = document.getElementById(btnId);
+            let now = Date.now();
+            let timeLeft = (lastTime + INTERVAL_48H) - now;
+
+            if (timeLeft > 0) {
+                btn.disabled = true;
+                let hours = Math.floor(timeLeft / (1000 * 60 * 60));
+                let minutes = Math.floor((timeLeft % (1000 * 60 * 60)) / (1000 * 60));
+                let seconds = Math.floor((timeLeft % (1000 * 60)) / 1000);
+                btn.innerText = `${hours}h ${minutes}m ${seconds}s`;
+            } else {
+                btn.disabled = false;
+                btn.innerText = "Watch Ad";
+            }
+        }
+
+        function watchEventAd(rewardAmount, btnId, cooldownKey) {
+            let btn = document.getElementById(btnId);
+            if(btn.disabled) return;
+
+            grantEventAdReward(rewardAmount, cooldownKey);
+        }
+
+        function grantEventAdReward(rewardAmount, cooldownKey) {
+            let now = Date.now();
+            let currentGp = userData.gp !== undefined ? userData.gp : (userData.points || 0);
+            let updateObj = { gp: currentGp + rewardAmount, points: currentGp + rewardAmount };
+            updateObj[cooldownKey] = now;
+
+            userRef.update(updateObj).then(() => {
+                tg.showAlert(`Event Ad watched successfully! +${rewardAmount} GP added.`);
+            });
+        }
+
+        setInterval(() => {
+            renderEventAds();
+        }, 1000);
+    </script>
+</body>
+</html>

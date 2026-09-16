@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>feldo - Super Admin Dashboard</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131c2e;
+            --card-border: #1e2a4a;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-purple: #6d5ce8;
+            --modal-bg: #0b132b;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0; padding: 16px;
+            display: flex; justify-content: center;
+        }
+        .container { width: 100%; max-width: 480px; box-sizing: border-box; padding-bottom: 50px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; }
+        .header h3 { margin: 0; color: #fff; background: linear-gradient(135deg, #c084fc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+        .back-btn { background: #2a1b4e; color: #fff; border: none; padding: 8px 14px; border-radius: 8px; cursor: pointer; font-size: 12px; text-decoration: none; }
+
+        .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: 18px; padding: 16px; margin-bottom: 16px; }
+        .card h4 { margin: 0 0 12px 0; font-size: 14px; color: #a78bfa; display: flex; align-items: center; gap: 8px; }
+
+        .nav-links { display: grid; grid-template-columns: 1fr; gap: 10px; margin-bottom: 16px; }
+        .nav-link-btn { background: linear-gradient(135deg, #7c3aed, #4c1d95); color: #fff; text-decoration: none; padding: 12px; border-radius: 12px; text-align: center; font-weight: 700; font-size: 13px; display: block; box-shadow: 0 4px 15px rgba(124, 58, 237, 0.3); }
+
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .stat-box { background: #0b0f19; border: 1px solid var(--card-border); padding: 14px; border-radius: 14px; text-align: center; }
+        .stat-box h2 { margin: 0 0 4px 0; color: #fbbf24; font-size: 20px; }
+        .stat-box.full { grid-column: span 2; }
+        .stat-box span { font-size: 11px; color: var(--text-muted); font-weight: 600; }
+
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 11px; color: var(--text-muted); margin-bottom: 4px; font-weight: 600; }
+        .form-control { width: 100%; background: #0b0f19; border: 1px solid var(--card-border); color: #fff; padding: 10px; border-radius: 10px; box-sizing: border-box; font-size: 13px; outline: none; }
+        .form-control:focus { border-color: #7c3aed; }
+        textarea.form-control { resize: none; height: 80px; }
+
+        .action-btn { background: #7c3aed; color: #fff; border: none; padding: 10px 16px; border-radius: 10px; font-weight: 700; width: 100%; cursor: pointer; font-size: 13px; transition: 0.2s; }
+        
+        .search-box { margin-bottom: 12px; }
+        .user-compact-row { background: #0b0f19; border: 1px solid var(--card-border); padding: 10px 12px; border-radius: 12px; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
+        .user-compact-info { font-size: 12px; }
+        
+        .manage-btn { background: #3b82f6; color: #fff; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; }
+
+        .ticket-row, .boost-req-row, .verify-req-row { background: #0b0f19; border: 1px solid var(--card-border); padding: 12px; border-radius: 12px; margin-bottom: 10px; }
+        .ticket-info, .boost-info, .verify-info { font-size: 12px; margin-bottom: 8px; line-height: 1.5; }
+        
+        .btn-group { display: flex; gap: 6px; flex-wrap: wrap; }
+        .action-sm-btn { background: #22c55e; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; }
+        .ban-btn { background: #ef4444; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; }
+        .reset-btn { background: #f59e0b; color: #fff; border: none; padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600; }
+
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; backdrop-filter: blur(6px); }
+        .modal {
+            display: none; position: fixed; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); background: var(--modal-bg);
+            border: 2px solid #7c3aed; border-radius: 20px; padding: 20px;
+            width: 90%; max-width: 400px; z-index: 1001; box-sizing: border-box;
+            box-shadow: 0 15px 40px rgba(124, 58, 237, 0.4); text-align: left;
+        }
+        .modal h3 { margin: 0 0 12px 0; font-size: 16px; color: #fbbf24; text-align: center; }
+        .modal-close { background: #ef4444; color: #fff; border: none; padding: 8px; border-radius: 8px; width: 100%; margin-top: 14px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h3><i class="fa-solid fa-user-shield" style="color: #34d399;"></i> feldo Super Admin</h3>
+            <a href="profile.html" class="back-btn"><i class="fa-solid fa-arrow-left"></i> Profile</a>
+        </div>
+
+        <div class="nav-links">
+            <a href="shopadmin.html" class="nav-link-btn"><i class="fa-solid fa-store"></i> Manage Shop & Orders</a>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-box">
+                <h2 id="totalUsersCount">0</h2>
+                <span>Total Users</span>
+            </div>
+            <div class="stat-box">
+                <h2 id="activeUsersCount">0</h2>
+                <span>Active (Live)</span>
+            </div>
+            <div class="stat-box">
+                <h2 id="pendingReqCount">0</h2>
+                <span>Pending Req</span>
+            </div>
+            <div class="stat-box">
+                <h2 id="totalGpCount">0</h2>
+                <span>Total GP</span>
+            </div>
+            <div class="stat-box full">
+                <h2 id="bannedUsersCount">0</h2>
+                <span>Banned Users</span>
+            </div>
+        </div>
+
+        <!-- পেমেন্ট সেটিংস কন্ট্রোল (bKash, Nagad, Binance, Bitget) -->
+        <div class="card">
+            <h4><i class="fa-solid fa-wallet"></i> Payment Accounts Settings</h4>
+            <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 10px;">Leave empty to hide any method from users.</p>
+            <div class="form-group">
+                <label>Binance UID</label>
+                <input type="text" id="setBinance" class="form-control" placeholder="Enter Binance UID">
+            </div>
+            <div class="form-group">
+                <label>Bitget UID</label>
+                <input type="text" id="setBitget" class="form-control" placeholder="Enter Bitget UID">
+            </div>
+            <div class="form-group">
+                <label>Nagad Number</label>
+                <input type="text" id="setNagad" class="form-control" placeholder="Enter Nagad number">
+            </div>
+            <div class="form-group">
+                <label>Bkash Number</label>
+                <input type="text" id="setBkash" class="form-control" placeholder="Enter Bkash number">
+            </div>
+            <button class="action-btn" onclick="savePaymentSettings()">Save Payment Settings</button>
+        </div>
+
+        <!-- ভেরিফিকেশন রিকোয়েস্ট ম্যানেজমেন্ট -->
+        <div class="card">
+            <h4><i class="fa-solid fa-user-check"></i> Account Verification Requests</h4>
+            <div id="verificationRequestsContainer" style="max-height: 250px; overflow-y: auto;">
+                <small style="color: var(--text-muted);">Loading verification requests...</small>
+            </div>
+        </div>
+
+        <!-- বুস্ট রিকোয়েস্ট ম্যানেজমেন্ট -->
+        <div class="card">
+            <h4><i class="fa-solid fa-bolt"></i> User Boost Requests</h4>
+            <div id="boostRequestsContainer" style="max-height: 220px; overflow-y: auto;">
+                <small style="color: var(--text-muted);">Loading boost requests...</small>
+            </div>
+        </div>
+
+        <!-- নোটিফিকেশন ব্রডকাস্ট -->
+        <div class="card">
+            <h4><i class="fa-solid fa-paper-plane"></i> Broadcast Notification</h4>
+            <div class="form-group">
+                <label>Title</label>
+                <input type="text" id="notifTitle" class="form-control" placeholder="Event Title...">
+            </div>
+            <div class="form-group">
+                <label>Message</label>
+                <textarea id="notifMessage" class="form-control" placeholder="Message body..."></textarea>
+            </div>
+            <div class="form-group">
+                <label>Upload Banner Image</label>
+                <input type="file" id="notifImageFile" class="form-control" accept="image/*" style="color: #94a3b8;">
+            </div>
+            <button class="action-btn" onclick="sendGlobalNotification()">Broadcast</button>
+        </div>
+
+        <!-- সাপোর্ট ইনবক্স -->
+        <div class="card">
+            <h4><i class="fa-solid fa-inbox"></i> Support Inbox</h4>
+            <div id="supportTicketsContainer" style="max-height: 250px; overflow-y: auto;">
+                <small style="color: var(--text-muted);">Loading support tickets...</small>
+            </div>
+        </div>
+
+        <!-- ইউজার ম্যানেজমেন্ট -->
+        <div class="card">
+            <h4><i class="fa-solid fa-users-gear"></i> User Management (Compact)</h4>
+            <div class="search-box">
+                <input type="text" id="searchUserInput" class="form-control" placeholder="🔍 Search by User ID..." onkeyup="filterUsersList()">
+            </div>
+            <div id="usersListContainer" style="max-height: 300px; overflow-y: auto;">
+                <small style="color: var(--text-muted);">Loading users...</small>
+            </div>
+        </div>
+    </div>
+
+    <!-- User Manage Profile Modal -->
+    <div class="overlay" id="modalOverlay" onclick="closeUserModal()"></div>
+    <div class="modal" id="userManageModal">
+        <h3>Manage User Profile</h3>
+        <div id="modalUserContent" style="font-size: 12px; line-height: 1.6;"></div>
+        <button class="modal-close" onclick="closeUserModal()">Close</button>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",
+            authDomain: "feldo-e6bdd.firebaseapp.com",
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",
+            projectId: "feldo-e6bdd",
+            storageBucket: "feldo-e6bdd.firebasestorage.app",
+            messagingSenderId: "880628628032",
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",
+            measurementId: "G-EHNFBDCDZ4"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        const ADMIN_USER_ID = "7757851056";
+
+        if (userId !== ADMIN_USER_ID) {
+            alert("Access Denied! Admins only.");
+            window.location.href = "index.html";
+        }
+
+        let allUsersData = {};
+
+        // পেমেন্ট সেটিংস লোড করা
+        db.ref('sponsor_payment_settings').once('value', snap => {
+            let data = snap.val() || {};
+            document.getElementById('setBinance').value = data.binanceUid || "";
+            document.getElementById('setBitget').value = data.bitgetUid || "";
+            document.getElementById('setNagad').value = data.nagadNum || "";
+            document.getElementById('setBkash').value = data.bkashNum || "";
+        });
+
+        function savePaymentSettings() {
+            let settingsData = {
+                binanceUid: document.getElementById('setBinance').value.trim(),
+                bitgetUid: document.getElementById('setBitget').value.trim(),
+                nagadNum: document.getElementById('setNagad').value.trim(),
+                bkashNum: document.getElementById('setBkash').value.trim(),
+                updatedAt: Date.now()
+            };
+
+            db.ref('sponsor_payment_settings').set(settingsData).then(() => {
+                tg.showAlert("✅ Payment accounts settings updated successfully!");
+            });
+        }
+
+        db.ref('users').on('value', snap => {
+            let total = 0, active = 0, banned = 0, pendingReq = 0, totalGp = 0;
+            let now = Date.now();
+            let oneDayMs = 24 * 60 * 60 * 1000;
+
+            if (snap.exists()) {
+                allUsersData = snap.val();
+                snap.forEach(userSnap => {
+                    let uData = userSnap.val();
+                    total++;
+                    totalGp += (uData.gp !== undefined ? uData.gp : (uData.points || 0));
+
+                    if (uData.lastSeen && (now - uData.lastSeen <= oneDayMs)) active++;
+                    if (uData.isBanned) banned++;
+                    if (uData.pending_boosts) {
+                        Object.values(uData.pending_boosts).forEach(b => {
+                            if (b.status === 'Pending') pendingReq++;
+                        });
+                    }
+                });
+            }
+
+            document.getElementById('totalUsersCount').innerText = total;
+            document.getElementById('activeUsersCount').innerText = active;
+            document.getElementById('bannedUsersCount').innerText = banned;
+            document.getElementById('pendingReqCount').innerText = pendingReq;
+            document.getElementById('totalGpCount').innerText = totalGp.toLocaleString();
+
+            renderUsersList(allUsersData);
+        });
+
+        // ভেরিফিকেশন রিকোয়েস্ট ম্যানেজমেন্ট
+        db.ref('verification_requests').on('value', snap => {
+            let container = document.getElementById('verificationRequestsContainer');
+            let html = "";
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    let reqKey = child.key;
+                    let req = child.val();
+                    if (req.status === 'Pending') {
+                        html += `
+                            <div class="verify-req-row">
+                                <div class="verify-info">
+                                    <b>User:</b> ${req.userName} (ID: ${req.userId})<br>
+                                    <b>Method:</b> <span style="color:#fbbf24">${req.method}</span><br>
+                                    <b>TrxID / Info:</b> ${req.trxId}<br>
+                                    ${req.screenshot ? `<a href="${req.screenshot}" target="_blank" style="color:#38bdf8; font-size:11px;">View Payment Screenshot 📷</a><br>` : ''}
+                                </div>
+                                <div class="btn-group">
+                                    <button class="action-sm-btn" onclick="approveVerification('${reqKey}', '${req.userId}')">Approve & Verify</button>
+                                    <button class="ban-btn" onclick="rejectVerification('${reqKey}', '${req.userId}')">Reject</button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                });
+                container.innerHTML = html || `<small style="color: var(--text-muted);">No pending verification requests.</small>`;
+            } else {
+                container.innerHTML = `<small style="color: var(--text-muted);">No pending verification requests.</small>`;
+            }
+        });
+
+        function approveVerification(reqKey, targetUserId) {
+            let updates = {};
+            updates[`verification_requests/${reqKey}/status`] = "Approved";
+            updates[`users/${targetUserId}/isVerified`] = true;
+
+            let notifData = {
+                title: "Account Verified! 🎉",
+                message: `Congratulations! Your account verification request has been approved by Admin.`,
+                timestamp: Date.now()
+            };
+            db.ref(`users/${targetUserId}/notifications`).push(notifData);
+            db.ref().update(updates).then(() => {
+                tg.showAlert("✅ User verified successfully!");
+            });
+        }
+
+        function rejectVerification(reqKey, targetUserId) {
+            db.ref(`verification_requests/${reqKey}`).update({ status: "Rejected" }).then(() => {
+                let notifData = {
+                    title: "Verification Rejected",
+                    message: `Your account verification request was rejected. Please contact support.`,
+                    timestamp: Date.now()
+                };
+                db.ref(`users/${targetUserId}/notifications`).push(notifData);
+                tg.showAlert("❌ Verification request rejected.");
+            });
+        }
+
+        // বুস্ট রিকোয়েস্ট ম্যানেজমেন্ট
+        db.ref('users').on('value', snap => {
+            if (!snap.exists()) return;
+            let container = document.getElementById('boostRequestsContainer');
+            let html = "";
+            snap.forEach(userSnap => {
+                let uId = userSnap.key;
+                let uData = userSnap.val();
+                if (uData.pending_boosts) {
+                    Object.keys(uData.pending_boosts).forEach(boostKey => {
+                        let boost = uData.pending_boosts[boostKey];
+                        if (boost.status === 'Pending') {
+                            html += `
+                                <div class="boost-req-row">
+                                    <div class="boost-info">
+                                        <b>User:</b> ${boost.userName} (ID: ${uId})<br>
+                                        <b>Service:</b> <span style="color:#fbbf24">${boost.serviceName} (${boost.duration})</span><br>
+                                        <b>Method:</b> ${boost.method || 'N/A'}<br>
+                                        <b>Sender Number:</b> <span style="color:#38bdf8">${boost.senderNumber || 'N/A'}</span><br>
+                                        <b>TXID:</b> <span style="color:#fbbf24">${boost.transactionId || 'N/A'}</span><br>
+                                        <a href="${boost.screenshot}" target="_blank" style="color:#38bdf8; font-size:11px;">View Screenshot 📷</a>
+                                    </div>
+                                    <div class="btn-group">
+                                        <button class="action-sm-btn" onclick="approveBoost('${uId}', '${boostKey}', '${boost.serviceId}', '${boost.duration}')">Approve</button>
+                                        <button class="ban-btn" onclick="rejectBoost('${uId}', '${boostKey}')">Reject</button>
+                                    </div>
+                                </div>
+                            `;
+                        }
+                    });
+                }
+            });
+            container.innerHTML = html || `<small style="color: var(--text-muted);">No pending boost requests.</small>`;
+        });
+
+        function approveBoost(targetUserId, boostKey, serviceId, durationDaysStr) {
+            let daysMatch = parseInt(durationDaysStr) || 5;
+            let expireTime = Date.now() + (daysMatch * 24 * 60 * 60 * 1000);
+            let updates = {};
+            updates[`users/${targetUserId}/pending_boosts/${boostKey}/status`] = "Approved";
+            updates[`users/${targetUserId}/boosts/${serviceId}`] = { expireTime: expireTime };
+            db.ref(`users/${targetUserId}/notifications`).push({
+                title: "Boost Activated! ⚡",
+                message: `Your boost service has been approved for ${daysMatch} days!`,
+                timestamp: Date.now()
+            });
+            db.ref().update(updates).then(() => tg.showAlert("✅ Boost approved successfully!"));
+        }
+
+        function rejectBoost(targetUserId, boostKey) {
+            db.ref(`users/${targetUserId}/pending_boosts/${boostKey}`).update({ status: "Rejected" }).then(() => {
+                db.ref(`users/${targetUserId}/notifications`).push({
+                    title: "Boost Rejected",
+                    message: `Your boost payment proof was rejected.`,
+                    timestamp: Date.now()
+                });
+                tg.showAlert("❌ Boost request rejected.");
+            });
+        }
+
+        function renderUsersList(usersObj) {
+            let container = document.getElementById('usersListContainer');
+            let html = "";
+            Object.keys(usersObj).forEach(uId => {
+                let uData = usersObj[uId];
+                let name = uData.name || uData.username || "User";
+                let country = uData.country || "Global / Unknown";
+                let isBanned = uData.isBanned || false;
+
+                html += `
+                    <div class="user-compact-row" data-userid="${uId}">
+                        <div class="user-compact-info">
+                            <b>${name}</b> ${isBanned ? '<span style="color:#ef4444">[BANNED]</span>' : ''}<br>
+                            <span style="color: #94a3b8; font-size: 10px;">ID: ${uId} | 🌍 ${country}</span>
+                        </div>
+                        <button class="manage-btn" onclick="openUserModal('${uId}')">Manage</button>
+                    </div>
+                `;
+            });
+            container.innerHTML = html || `<small style="color: var(--text-muted);">No users found.</small>`;
+        }
+
+        function filterUsersList() {
+            let query = document.getElementById('searchUserInput').value.trim().toLowerCase();
+            let rows = document.querySelectorAll('.user-compact-row');
+            rows.forEach(row => {
+                let uId = row.getAttribute('data-userid').toLowerCase();
+                row.style.display = uId.includes(query) ? 'flex' : 'none';
+            });
+        }
+
+        function openUserModal(uId) {
+            let uData = allUsersData[uId];
+            if (!uData) return;
+
+            let name = uData.name || uData.username || "User";
+            let gp = uData.gp !== undefined ? uData.gp : (uData.points || 0);
+            let gold = uData.gold !== undefined ? uData.gold : 0;
+            let country = uData.country || "Unknown";
+            let isBanned = uData.isBanned || false;
+
+            let content = `
+                <b>Name:</b> ${name}<br>
+                <b>User ID:</b> ${uId}<br>
+                <b>Location:</b> 🌍 ${country}<br>
+                <b>Current GP:</b> <span style="color:#fbbf24;">⚡ ${gp}</span><br>
+                <b>Current Gold:</b> <span style="color:#fbbf24;">🪙 ${gold}</span><br><br>
+                <b>Gift Balance:</b><br>
+                <div style="display:flex; gap:6px; margin-top:4px; margin-bottom:8px;">
+                    <input type="number" id="giftGp-${uId}" placeholder="GP" class="form-control" style="width:50px;">
+                    <input type="number" id="giftGold-${uId}" placeholder="Gold" class="form-control" style="width:50px;">
+                    <button class="action-sm-btn" onclick="giftBalance('${uId}')">Add</button>
+                </div>
+                <b>Account Status:</b><br>
+                <div style="margin-top:4px;">
+                    <button class="ban-btn" onclick="toggleBan('${uId}', ${isBanned})">${isBanned ? 'Unban Account' : 'Ban Account'}</button>
+                </div>
+            `;
+            document.getElementById('modalUserContent').innerHTML = content;
+            document.getElementById('modalOverlay').style.display = 'block';
+            document.getElementById('userManageModal').style.display = 'block';
+        }
+
+        function closeUserModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
+            document.getElementById('userManageModal').style.display = 'none';
+        }
+
+        function giftBalance(uId) {
+            let addGp = parseInt(document.getElementById(`giftGp-${uId}`).value) || 0;
+            let addGold = parseInt(document.getElementById(`giftGold-${uId}`).value) || 0;
+            let uData = allUsersData[uId];
+            let currentGp = uData.gp !== undefined ? uData.gp : (uData.points || 0);
+            let currentGold = uData.gold !== undefined ? uData.gold : 0;
+
+            db.ref('users/' + uId).update({
+                gp: currentGp + addGp,
+                points: currentGp + addGp,
+                gold: currentGold + addGold
+            }).then(() => {
+                tg.showAlert(`🎁 Gift sent successfully!`);
+                closeUserModal();
+            });
+        }
+
+        function toggleBan(uId, currentStatus) {
+            let newStatus = !currentStatus;
+            db.ref('users/' + uId).update({ isBanned: newStatus }).then(() => {
+                tg.showAlert(newStatus ? `🚫 User Banned` : `✅ User Unbanned`);
+                closeUserModal();
+            });
+        }
+
+        function sendGlobalNotification() {
+            let title = document.getElementById('notifTitle').value.trim();
+            let message = document.getElementById('notifMessage').value.trim();
+            let fileInput = document.getElementById('notifImageFile');
+
+            if (!title || !message) { tg.showAlert("⚠️ Enter title & message!"); return; }
+
+            if (fileInput.files.length > 0) {
+                let reader = new FileReader();
+                reader.onloadend = () => broadcastData(title, message, reader.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                broadcastData(title, message, "");
+            }
+        }
+
+        function broadcastData(title, message, imageUrl) {
+            let notifData = { title, message, image: imageUrl, timestamp: Date.now() };
+            db.ref('users').once('value').then(snap => {
+                if (snap.exists()) {
+                    let updates = {};
+                    snap.forEach(child => {
+                        let pushKey = db.ref().child(`users/${child.key}/notifications`).push().key;
+                        updates[`users/${child.key}/notifications/${pushKey}`] = notifData;
+                    });
+                    db.ref().update(updates).then(() => {
+                        tg.showAlert("✅ Notification broadcasted!");
+                        document.getElementById('notifTitle').value = '';
+                        document.getElementById('notifMessage').value = '';
+                    });
+                }
+            });
+        }
+    </script>
+</body>
+</html>

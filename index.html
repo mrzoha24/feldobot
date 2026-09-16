@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Feldo - Home</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>  
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css?v=2.4"> 
+    
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131c2e;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-gradient: linear-gradient(135deg, #2563eb 0%, #1e3a8a 100%);
+            --border-color: #1a2a4e;
+            --modal-bg: #0b132b;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0 0 100px 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: hidden;
+        }
+        .container {
+            width: 100%;
+            max-width: 480px;
+            padding: 16px;
+            box-sizing: border-box;
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .user-info h2 { margin: 0; font-size: 20px; font-weight: 700; color: #fff; }
+        .user-info p { margin: 4px 0 0 0; font-size: 13px; color: var(--text-muted); }
+        .header-icons { display: flex; align-items: center; gap: 12px; }
+        .notification-btn { background: none; border: none; font-size: 20px; color: var(--text-main); cursor: pointer; position: relative; }
+
+        /* আনরিড নোটিফিকেশন থাকলে বেল আইকন কাঁপবে */
+        .notification-btn.has-unread {
+            animation: bellShake 1.2s ease-in-out infinite;
+            color: #fbbf24;
+        }
+        @keyframes bellShake {
+            0%, 100% { transform: rotate(0deg); }
+            10% { transform: rotate(-15deg); }
+            20% { transform: rotate(13deg); }
+            30% { transform: rotate(-10deg); }
+            40% { transform: rotate(8deg); }
+            50% { transform: rotate(-5deg); }
+            60% { transform: rotate(3deg); }
+            70%, 100% { transform: rotate(0deg); }
+        }
+        .notification-btn .unread-dot {
+            position: absolute;
+            top: -2px; right: -2px;
+            width: 9px; height: 9px;
+            background: #ef4444;
+            border: 2px solid var(--bg-color);
+            border-radius: 50%;
+            display: none;
+        }
+        .notification-btn.has-unread .unread-dot { display: block; }
+        
+        .avatar { width: 40px; height: 40px; border-radius: 50%; object-fit: cover; cursor: pointer; border: 2px solid #2563eb; }
+        
+        .points-card { 
+            background: var(--primary-gradient); 
+            border-radius: 20px; 
+            padding: 20px 16px; 
+            color: #ffffff; 
+            position: relative; 
+            overflow: hidden; 
+            margin-bottom: 24px; 
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); 
+            animation: pulseGlow 4s infinite alternate;
+        }
+        @keyframes pulseGlow {
+            0% { box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.4); }
+            100% { box-shadow: 0 15px 35px -5px rgba(37, 99, 235, 0.7); }
+        }
+        .points-title { font-size: 13px; opacity: 0.9; margin-bottom: 8px; }
+        
+        .points-value { 
+            display: flex; 
+            gap: 10px; 
+            align-items: center; 
+        }
+        .currency-box { 
+            font-size: 14px; 
+            background: rgba(255,255,255,0.15); 
+            padding: 8px 12px; 
+            border-radius: 12px; 
+            display: inline-flex; 
+            align-items: center; 
+            gap: 6px; 
+            flex: 1;
+            justify-content: center;
+        }
+        .currency-box span { font-size: 20px; font-weight: 800; }
+        
+        /* কুইক মেনু গ্রিড (৪ কলাম) */
+        .quick-menu { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 24px; }
+        .menu-item { background: var(--card-bg); border: 1px solid var(--border-color); padding: 12px 4px; border-radius: 14px; text-align: center; cursor: pointer; text-decoration: none; color: var(--text-main); transition: transform 0.2s, background 0.2s; }
+        .menu-item:hover { transform: translateY(-3px); background: #1a2642; }
+        .menu-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; margin: 0 auto 6px auto; font-size: 15px; color: #fff; }
+        .menu-label { font-size: 10px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        .section-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .section-title { font-size: 16px; font-weight: 700; color: #60a5fa; }
+        .streak-badge { font-size: 12px; color: #f97316; font-weight: 600; }
+        
+        .bonus-scroll { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 8px; margin-bottom: 24px; scrollbar-width: none; }
+        .bonus-scroll::-webkit-scrollbar { display: none; }
+        .bonus-card { background: var(--card-bg); border: 1px solid var(--border-color); min-width: 65px; padding: 12px 6px; border-radius: 14px; text-align: center; flex-shrink: 0; }
+        .bonus-card.active { border-color: #3b82f6; background: rgba(59, 130, 246, 0.25); }
+        .bonus-card.claimed { opacity: 0.5; background: #0b0f19; }
+        .bonus-card .day { font-size: 11px; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        .bonus-card .icon { font-size: 18px; margin-bottom: 6px; color: #22c55e; }
+        .bonus-card .reward { font-size: 11px; font-weight: 700; color: #fbbf24; }
+        
+        /* ডলার টোকেন কার্ড ডিসপ্লে গ্রিড */
+        .dollar-shop-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+        .dollar-card-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 16px; text-align: center; display: flex; flex-direction: column; justify-content: space-between; transition: 0.2s; }
+        .dollar-card-item:hover { border-color: #34d399; }
+        .dollar-card-item i { font-size: 32px; color: #34d399; margin-bottom: 10px; }
+        .dollar-card-item h4 { margin: 0 0 4px 0; font-size: 15px; color: #fff; }
+        .dollar-card-item p { margin: 0 0 12px 0; font-size: 12px; color: #fbbf24; font-weight: bold; }
+        .dollar-buy-btn { background: linear-gradient(135deg, #22c55e, #15803d); color: #fff; border: none; padding: 8px 12px; border-radius: 10px; font-weight: bold; font-size: 12px; cursor: pointer; text-decoration: none; display: block; transition: 0.2s; }
+        .dollar-buy-btn:hover { opacity: 0.9; }
+
+        /* ডাইনামিক স্পন্সর ব্যানার বা ভিডিও ডিসপ্লে বক্স */
+        .sponsor-display-box {
+            background: var(--card-bg); border: 1px dashed #2563eb; border-radius: 16px;
+            padding: 14px; text-align: center; margin-bottom: 24px; cursor: pointer; transition: 0.2s;
+        }
+        .sponsor-display-box:hover { border-color: #34d399; }
+        .sponsor-media { width: 100%; max-height: 180px; object-fit: cover; border-radius: 12px; margin-bottom: 8px; background: #000; }
+        .sponsor-display-box h4 { margin: 0 0 4px 0; font-size: 14px; color: #fff; }
+        .sponsor-display-box p { margin: 0; font-size: 11px; color: #fbbf24; font-weight: bold; }
+
+        /* Notice Modal Popup Styling */
+        .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; backdrop-filter: blur(6px); }
+        .notice-modal {
+            display: none;
+            position: fixed;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            background: var(--modal-bg);
+            border: 2px solid #2563eb;
+            border-radius: 22px;
+            padding: 24px;
+            width: 90%;
+            max-width: 400px;
+            z-index: 1001;
+            box-sizing: border-box;
+            text-align: left;
+            box-shadow: 0 15px 40px rgba(37, 99, 235, 0.4);
+        }
+        .notice-modal h3 { margin: 0 0 12px 0; font-size: 18px; color: #fbbf24; font-weight: 800; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .notice-modal ul { margin: 0 0 20px 0; padding-left: 18px; font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+        .notice-modal ul li { margin-bottom: 8px; }
+        .notice-modal ul li strong { color: #f8fafc; }
+        .close-notice-btn {
+            background: linear-gradient(135deg, #2563eb, #1e3a8a);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            width: 100%;
+            font-size: 14px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: 0.2s;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
+        }
+        .close-notice-btn:hover { opacity: 0.9; }
+
+        .bottom-nav { 
+            position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); 
+            width: 100%; max-width: 480px; background: var(--card-bg); 
+            border-top: 1px solid var(--border-color); display: flex; justify-content: space-around; 
+            padding: 12px 0 14px 0; box-sizing: border-box; z-index: 100; 
+            box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.3);
+        }
+        .nav-item { text-align: center; color: var(--text-muted); text-decoration: none; font-size: 11px; font-weight: 600; cursor: pointer; flex: 1; transition: color 0.2s, transform 0.2s; }
+        .nav-item.active { color: #60a5fa; transform: translateY(-2px); }
+        .nav-item i { font-size: 20px; display: block; margin-bottom: 4px; }
+    </style>
+</head>
+<body>
+
+    <!-- Notice Modal Popup -->
+    <div class="overlay" id="noticeOverlay"></div>
+    <div class="notice-modal" id="noticeModal">
+        <h3><i class="fa-solid fa-shield-halved" style="color: #60a5fa;"></i> Feldo Arcade Rules & Guidelines</h3>
+        <ul>
+            <li><strong>Daily Check-in:</strong> Claim your daily bonus every 24 hours to keep your streak alive and earn free Gold coins!</li>
+            <li><strong>Fair Play Policy:</strong> Multiple accounts or cheating in games/tasks will result in a permanent ban.</li>
+            <li><strong>Shop Orders:</strong> Make sure to setup your correct wallet/MFS number in your Profile before ordering dollar cards[cite: 2].</li>
+            <li><strong>Account Verification:</strong> Verify your account via the Agent section if you want to unlock higher earning limits[cite: 3].</li>
+        </ul>
+        <button class="close-notice-btn" onclick="closeNoticeModal()">I Understand & Agree</button>
+    </div>
+
+    <div class="container" id="mainContainer">
+        <div class="header">
+            <div class="user-info">
+                <h2>Hello, <span id="username">User</span> 👋</h2>
+                <p>Play games, complete tasks & earn!</p>
+            </div>
+            <div class="header-icons">
+                <button class="notification-btn" id="notificationBtn" onclick="location.href='notification.html'"><i class="fa-regular fa-bell"></i><span class="unread-dot"></span></button>
+                <img id="user-avatar" src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100" class="avatar" alt="User" onclick="location.href='profile.html'">
+            </div>
+        </div>
+
+        <div class="points-card">
+            <div class="points-title">Your Balance</div>
+            <div class="points-value">
+                <div class="currency-box" title="GP Points (Fuel)">⚡ <span id="gp-balance">0</span> GP</div>
+                <div class="currency-box" title="Gold Points">🪙 <span id="gold-balance">0</span> Gold</div>
+            </div>
+        </div>
+
+        <!-- কুইক মেনু (Sponsor অপশন) -->
+        <div class="quick-menu">
+            <div class="menu-item" onclick="claimDailyBonus()">
+                <div class="menu-icon" style="background: #3b82f6;"><i class="fa-solid fa-calendar-check"></i></div>
+                <div class="menu-label">Check-in</div>
+            </div>
+            <a href="game.html" class="menu-item">
+                <div class="menu-icon" style="background: #ec4899;"><i class="fa-solid fa-gamepad"></i></div>
+                <div class="menu-label">Game</div>
+            </a>
+            <a href="task.html" class="menu-item">
+                <div class="menu-icon" style="background: #22c55e;"><i class="fa-solid fa-list-check"></i></div>
+                <div class="menu-label">Tasks</div>
+            </a>
+            <a href="agent.html" class="menu-item">
+                <div class="menu-icon" style="background: #f59e0b;"><i class="fa-solid fa-handshake"></i></div>
+                <div class="menu-label">Agent</div>
+            </a>
+            <a href="boost.html" class="menu-item">
+                <div class="menu-icon" style="background: #3b82f6;"><i class="fa-solid fa-bolt"></i></div>
+                <div class="menu-label">Boost</div>
+            </a>
+            <a href="shop.html" class="menu-item">
+                <div class="menu-icon" style="background: #db2777;"><i class="fa-solid fa-store"></i></div>
+                <div class="menu-label">Shop</div>
+            </a>
+            <a href="event.html" class="menu-item">
+                <div class="menu-icon" style="background: #84cc16;"><i class="fa-solid fa-calendar-star"></i></div>
+                <div class="menu-label">Event</div>
+            </a>
+            <a href="sponsor.html" class="menu-item">
+                <div class="menu-icon" style="background: #ef4444;"><i class="fa-solid fa-rectangle-ad"></i></div>
+                <div class="menu-label">Sponsor</div>
+            </a>
+        </div>
+
+        <div class="section-header">
+            <div class="section-title">Daily Bonus</div>
+            <div class="streak-badge" id="streak-text"><i class="fa-solid fa-fire"></i> 1 Days Streak</div>
+        </div>
+        <div class="bonus-scroll" id="daily-bonus-container"></div>
+
+        <!-- স্পন্সর ব্যানার সেকশন -->
+        <div class="section-header">
+            <div class="section-title">📢 Featured Sponsor</div>
+            <a href="sponsor.html" style="font-size: 11px; color: #60a5fa; text-decoration: none; font-weight: 600;">Ad with Us</a>
+        </div>
+        <div id="activeSponsorContainer">
+            <div class="sponsor-display-box" onclick="location.href='sponsor.html'">
+                <img src="https://res.cloudinary.com/dyqegwdme/image/upload/v1788989816/s_c378ru.png" class="sponsor-media" alt="Sponsor Banner">
+                <h4>Create Your First Sponsor Ad!</h4>
+                <p>No active sponsor yet. Click here to create your ad 🚀</p>
+            </div>
+        </div>
+
+        <!-- ডলার টোকেন কার্ড ডিসপ্লে সেকশন -->
+        <div class="section-header">
+            <div class="section-title">💵 Dollar Token Cards</div>
+            <a href="shop.html" style="font-size: 12px; color: #60a5fa; text-decoration: none; font-weight: 600;">View Shop</a>
+        </div>
+
+        <div class="dollar-shop-grid">
+            <div class="dollar-card-item">
+                <div>
+                    <i class="fa-solid fa-wallet"></i>
+                    <h4>$5 Dollar Card</h4>
+                    <p>80,000 Gold</p>
+                </div>
+                <a href="shop.html" class="dollar-buy-btn">Redeem Now</a>
+            </div>
+            <div class="dollar-card-item">
+                <div>
+                    <i class="fa-solid fa-wallet"></i>
+                    <h4>$10 Dollar Card</h4>
+                    <p>150,000 Gold (150L)</p>
+                </div>
+                <a href="shop.html" class="dollar-buy-btn">Redeem Now</a>
+            </div>
+            <div class="dollar-card-item">
+                <div>
+                    <i class="fa-solid fa-wallet"></i>
+                    <h4>$20 Dollar Card</h4>
+                    <p>290,000 Gold</p>
+                </div>
+                <a href="shop.html" class="dollar-buy-btn">Redeem Now</a>
+            </div>
+            <div class="dollar-card-item">
+                <div>
+                    <i class="fa-solid fa-wallet"></i>
+                    <h4>$50 Dollar Card</h4>
+                    <p>700,000 Gold</p>
+                </div>
+                <a href="shop.html" class="dollar-buy-btn">Redeem Now</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="bottom-nav" id="bottomNav">
+        <a class="nav-item active" href="index.html"><i class="fa-solid fa-house"></i>Home</a>
+        <a class="nav-item" href="game.html"><i class="fa-solid fa-gamepad"></i>Game</a>
+        <a class="nav-item" href="task.html"><i class="fa-solid fa-list-check"></i>Task</a>
+        <a class="nav-item" href="shop.html"><i class="fa-solid fa-store"></i>Shop</a>
+        <a class="nav-item" href="profile.html"><i class="fa-solid fa-user"></i>Profile</a>
+    </div>
+
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-database-compat.js"></script>
+
+    <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyDhfJ5kaWCbTpCbZKrmVpzROQia9XIdhhc",
+            authDomain: "feldo-e6bdd.firebaseapp.com",
+            databaseURL: "https://feldo-e6bdd-default-rtdb.firebaseio.com",
+            projectId: "feldo-e6bdd",
+            storageBucket: "feldo-e6bdd.firebasestorage.app",
+            messagingSenderId: "880628628032",
+            appId: "1:880628628032:web:771cdd8dea5c4ebae9fda5",
+            measurementId: "G-EHNFBDCDZ4"
+        };
+
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
+
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        let user = tg.initDataUnsafe.user;
+        let userId = user ? user.id.toString() : "7757851056";
+        let username = user ? (user.first_name || "User") : "User";
+
+        document.getElementById('username').innerText = username;
+        if (user && user.photo_url) {
+            document.getElementById('user-avatar').src = user.photo_url;
+        }
+
+        let userRef = db.ref('users/' + userId);
+        let userData = { gp: 0, gold: 0, streakDay: 1, lastCheckInDate: "" };
+
+        userRef.on('value', (snapshot) => {
+            let data = snapshot.val();
+            if (data) {
+                userData = data;
+                updateUI();
+                userRef.update({ name: username, username: username, lastSeen: Date.now() });
+            } else {
+                userData = { gp: 100, gold: 0, streakDay: 1, lastCheckInDate: "", name: username, username: username, lastSeen: Date.now() };
+                userRef.set(userData);
+                updateUI();
+            }
+        });
+
+        function updateUI() {
+            let gp = userData.gp !== undefined ? userData.gp : (userData.points || 0);
+            let gold = userData.gold !== undefined ? userData.gold : 0;
+
+            document.getElementById('gp-balance').innerText = gp.toLocaleString();
+            document.getElementById('gold-balance').innerText = gold.toLocaleString();
+            document.getElementById('streak-text').innerHTML = `<i class="fa-solid fa-fire"></i> ${userData.streakDay || 1} Days Streak`;
+            renderDailyBonus();
+        }
+
+        function renderDailyBonus() {
+            const container = document.getElementById('daily-bonus-container');
+            container.innerHTML = '';
+            // ৭ দিনের জন্য ১০ থেকে ৭০ গোল্ড পয়েন্ট সেট করা হলো
+            const rewards = [10, 20, 30, 40, 50, 60, 70]; 
+            let currentStreak = userData.streakDay || 1;
+            
+            for (let i = 1; i <= 7; i++) {
+                let isClaimed = i < currentStreak;
+                let isActive = i === currentStreak;
+                let iconClass = isClaimed ? "fa-solid fa-circle-check" : (i === 3 ? "fa-solid fa-gift" : "fa-solid fa-box-open");
+                let cardClass = "bonus-card" + (isActive ? " active" : "") + (isClaimed ? " claimed" : "");
+
+                container.innerHTML += `
+                    <div class="${cardClass}">
+                        <div class="day">Day ${i}</div>
+                        <div class="icon"><i class="${iconClass}"></i></div>
+                        <div class="reward">+${rewards[i-1]} Gold</div>
+                    </div>
+                `;
+            }
+        }
+
+        function claimDailyBonus() {
+            let today = new Date().toDateString();
+            if (userData.lastCheckInDate === today) {
+                tg.showAlert('You have already claimed today!');
+                return;
+            }
+            // ৭ দিনের জন্য ১০ থেকে ৭০ গোল্ড পয়েন্ট
+            const rewards = [10, 20, 30, 40, 50, 60, 70];
+            let rewardAmount = rewards[(userData.streakDay || 1) - 1] || 10;
+
+            let currentGold = userData.gold !== undefined ? userData.gold : 0;
+            userData.gold = currentGold + rewardAmount;
+            userData.lastCheckInDate = today;
+            userData.streakDay = (userData.streakDay || 1) < 7 ? (userData.streakDay || 1) + 1 : 1;
+
+            userRef.set(userData).then(() => {
+                tg.showAlert(`Claimed Daily Bonus! +${rewardAmount} Gold added to your balance.`);
+            });
+        }
+
+        // নোটিফিকেশন চেক করে বেল আইকন কাঁপানো (আনরিড থাকলে)
+        db.ref('users/' + userId + '/notifications').on('value', snap => {
+            let bellBtn = document.getElementById('notificationBtn');
+            let hasUnread = false;
+
+            if (snap.exists()) {
+                snap.forEach(child => {
+                    let notif = child.val();
+                    if (!notif.isRead) {
+                        hasUnread = true;
+                    }
+                });
+            }
+
+            if (hasUnread) {
+                bellBtn.classList.add('has-unread');
+            } else {
+                bellBtn.classList.remove('has-unread');
+            }
+        });
+
+        // ফায়ারবেস থেকে একটিভ স্পন্সর ফেচ করা
+        db.ref('active_sponsor').on('value', snap => {
+            let sponsor = snap.val();
+            let container = document.getElementById('activeSponsorContainer');
+            
+            if (sponsor && sponsor.bannerUrl) {
+                let isVideo = sponsor.bannerUrl.endsWith('.mp4') || sponsor.bannerUrl.includes('video');
+                let mediaHtml = isVideo ? 
+                    `<video src="${sponsor.bannerUrl}" class="sponsor-media" autoplay muted loop playsinline></video>` : 
+                    `<img src="${sponsor.bannerUrl}" class="sponsor-media" alt="Sponsor Banner">`;
+
+                container.innerHTML = `
+                    <div class="sponsor-display-box" onclick="location.href='sponsor.html'">
+                        ${mediaHtml}
+                        <h4>${sponsor.shopName || 'Sponsored Promotion'}</h4>
+                        <p>Click to create or view your ad campaigns! 🚀</p>
+                    </div>
+                `;
+            } else {
+                container.innerHTML = `
+                    <div class="sponsor-display-box" onclick="location.href='sponsor.html'">
+                        <img src="https://res.cloudinary.com/dyqegwdme/image/upload/v1788989816/s_c378ru.png" class="sponsor-media" alt="Sponsor Banner">
+                        <h4>Create Your First Sponsor Ad!</h4>
+                        <p>No active sponsor yet. Click here to create your ad 🚀</p>
+                    </div>
+                `;
+            }
+        });
+
+        function checkAndShowNotice() {
+            const SIX_HOURS = 6 * 60 * 60 * 1000;
+            let lastShownTime = localStorage.getItem('feldo_notice_time_' + userId);
+            let currentTime = Date.now();
+
+            if (!lastShownTime || (currentTime - parseInt(lastShownTime)) >= SIX_HOURS) {
+                document.getElementById('noticeOverlay').style.display = 'block';
+                document.getElementById('noticeModal').style.display = 'block';
+            }
+        }
+
+        function closeNoticeModal() {
+            document.getElementById('noticeOverlay').style.display = 'none';
+            document.getElementById('noticeModal').style.display = 'none';
+            localStorage.setItem('feldo_notice_time_' + userId, Date.now());
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            setTimeout(checkAndShowNotice, 1000);
+        });
+    </script>
+</body>
+</html>
